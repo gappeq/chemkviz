@@ -1,0 +1,25 @@
+{
+  "name": "ChemKvíz – Prvky & Značky",
+  "short_name": "ChemKvíz",
+  "description": "Naučte se chemické značky všech 118 prvků pomocí flashkaret a kvízů.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0007",
+  "theme_color": "#ff2d78",
+  "orientation": "portrait",
+  "lang": "cs",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

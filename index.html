@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ChemKvíz">
+<meta name="theme-color" content="#ff2d78">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>ChemKvíz – Naučíme se prvky!</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@400;700&family=DM+Serif+Display:ital@0;1&family=Bebas+Neue&family=Nunito:wght@400;700;900&family=Playfair+Display:ital,wght@1,700&family=VT323&family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== SKIN SWITCHER ===== */
+  .skin-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .skin-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .skin-btn:hover { transform: scale(1.15); }
+  .skin-btn.active { border-color: #fff; transform: scale(1.2); }
+
+  .skin-btn-label {
+    font-size: 10px;
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 2px;
+    display: none;
+  }
+
+  .skin-wrap {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .skin-wrap-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+<style>
+  :root {
+    --bg: #0a0007;
+    --surface: #110010;
+    --card: #18001a;
+    --border: #3a003d;
+    --accent: #ff2d78;
+    --accent2: #c800ff;
+    --accent3: #ff80b0;
+    --text: #f0d0e8;
+    --muted: #c090aa;
+    --correct: #ff6eb0;
+    --wrong: #c800ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,45,120,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(200,0,255,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    line-height: 1;
+    color: #fff;
+  }
+
+  h1 span { color: var(--accent); }
+
+  /* Mode selector */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 6px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* Category filter */
+  .category-wrap {
+    margin-bottom: 20px;
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .cat-btn {
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.3;
+    position: relative;
+  }
+
+  .cat-btn:active { transform: scale(0.96); }
+
+  .cat-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255,45,120,0.1);
+    font-weight: 700;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* === FLASHCARD MODE === */
+  #flashcard-mode { display: none; }
+  #quiz-mode { display: none; }
+
+  .flashcard-area {
+    perspective: 1200px;
+    height: 280px;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  .flashcard {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    border-radius: 24px;
+  }
+
+  .flashcard.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .card-front {
+    background: linear-gradient(135deg, var(--card), #1a001f);
+  }
+
+  .card-back {
+    background: linear-gradient(135deg, #0d0012, #150010);
+    border-color: var(--accent);
+    transform: rotateY(180deg);
+  }
+
+  .element-symbol {
+    font-size: 72px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .element-number {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .element-name {
+    font-size: 34px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .element-detail {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    text-align: center;
+  }
+
+  .element-funfact {
+    font-size: 14px;
+    color: var(--accent3);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.5;
+    opacity: 0.9;
+  }
+
+  .flip-hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 16px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .flash-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-prev {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-next {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-shuffle {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 100px;
+    transition: width 0.3s;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* === QUIZ MODE === */
+  .quiz-question {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-question::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .question-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .quiz-symbol {
+    font-size: 80px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    line-height: 1;
+  }
+
+  .quiz-name-q {
+    font-size: 34px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    color: #fff;
+  }
+
+  .quiz-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .answer-btn {
+    padding: 16px 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .answer-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(0,229,255,0.08);
+  }
+
+  .answer-btn.correct {
+    border-color: var(--correct);
+    background: rgba(184,255,87,0.12);
+    color: var(--correct);
+  }
+
+  .answer-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(255,77,109,0.12);
+    color: var(--wrong);
+  }
+
+  .answer-btn:disabled { cursor: default; }
+
+  .answer-sub {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .feedback {
+    text-align: center;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .feedback-text {
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .feedback-text.visible { opacity: 1; }
+  .feedback-text.ok { color: var(--correct); }
+  .feedback-text.bad { color: var(--wrong); }
+
+  .btn-next-quiz {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 18px;
+    font-weight: 400;
+    cursor: pointer;
+    display: none;
+    transition: all 0.15s;
+  }
+
+  .btn-next-quiz:active { transform: scale(0.98); }
+  .btn-next-quiz.show { display: block; }
+
+  /* Quiz type toggle */
+  .quiz-type {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .quiz-type-btn {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quiz-type-btn.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(255,77,109,0.08);
+  }
+
+  /* Streak badge */
+  .streak {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--accent2);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 100px;
+    display: none;
+    z-index: 100;
+    animation: pop 0.3s;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.7); }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 999;
+    animation: confetti-fall 0.8s forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="logo">🖤 ChemKvíz</div>
+    <h1>Prvky <span>&</span> Značky</h1>
+  </header>
+
+  <!-- Skin switcher -->
+  <div class="skin-wrap">
+    <div class="skin-wrap-label">Skin</div>
+    <div class="skin-bar" id="skin-bar"></div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('flash')">📚 Flashkarty</button>
+    <button class="mode-tab" onclick="setMode('quiz')">🎯 Kvíz</button>
+  </div>
+
+  <!-- Category filter -->
+  <div class="category-wrap">
+    <div class="category-grid" id="cat-list"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="stat-total">118</div>
+      <div class="stat-label">Prvků</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-correct">0</div>
+      <div class="stat-label">Správně</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-streak">0</div>
+      <div class="stat-label">Streak</div>
+    </div>
+  </div>
+
+  <!-- FLASHCARD MODE -->
+  <div id="flashcard-mode">
+    <div class="progress-bar"><div class="progress-fill" id="fc-progress"></div></div>
+    <div class="progress-text" id="fc-progress-text"></div>
+
+    <div class="flashcard-area" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="card-face card-front">
+          <div class="element-number" id="fc-number"></div>
+          <div class="element-symbol" id="fc-symbol"></div>
+          <div class="element-element" style="font-size:13px;color:var(--muted);font-family:'Space Mono',monospace" id="fc-category-badge"></div>
+        </div>
+        <div class="card-face card-back">
+          <div class="element-name" id="fc-name"></div>
+          <div class="element-detail" id="fc-detail"></div>
+          <div class="element-funfact" id="fc-funfact"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-hint">👆 Klepni na kartu pro otočení</div>
+
+    <div class="flash-controls">
+      <button class="btn btn-prev" onclick="prevCard()">← Zpět</button>
+      <button class="btn-shuffle" onclick="shuffleCards()" title="Zamíchat">🔀</button>
+      <button class="btn btn-next" onclick="nextCard()">Další →</button>
+    </div>
+  </div>
+
+  <!-- QUIZ MODE -->
+  <div id="quiz-mode">
+    <div class="quiz-type">
+      <button class="quiz-type-btn active" id="qt-sym" onclick="setQuizType('symbol')">Značka → Název</button>
+      <button class="quiz-type-btn" id="qt-name" onclick="setQuizType('name')">Název → Značka</button>
+      <button class="quiz-type-btn" id="qt-mix" onclick="setQuizType('mix')">Mix 🎲</button>
+    </div>
+
+    <div class="quiz-question">
+      <div class="question-label" id="q-label">Co je toto za prvek?</div>
+      <div id="q-content"></div>
+      <div class="quiz-sub" id="q-sub"></div>
+    </div>
+
+    <div class="answers" id="answers"></div>
+    <div class="feedback"><div class="feedback-text" id="feedback"></div></div>
+    <button class="btn-next-quiz" id="btn-next-quiz" onclick="nextQuiz()">Další otázka →</button>
+  </div>
+<div style="text-align:center;margin-top:40px;font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;opacity:0.6;">Made with ❤️ by your mum and dad.</div>
+
+</div>
+
+<div class="streak" id="streak-badge"></div>
+
+<script>
+const ELEMENTS = [
+  {z:1, sym:"H", name:"Vodík", cat:"Nekovy", fun:"Tvoří 75 % veškeré hmoty ve vesmíru. Celý vesmír je v podstatě vodík."},
+  {z:2, sym:"He", name:"Helium", cat:"Vzácné plyny", fun:"Je tak lehké, že helium unikající ze Země do vesmíru se už nikdy nevrátí."},
+  {z:3, sym:"Li", name:"Lithium", cat:"Alkalické kovy", fun:"Používá se v bateriích tvého telefonu. Také v lécích na bipolární poruchu."},
+  {z:4, sym:"Be", name:"Beryllium", cat:"Kovy alk. zemin", fun:"Extrémně toxické — jeho prach způsobuje nevyléčitelnou nemoc plic."},
+  {z:5, sym:"B", name:"Bor", cat:"Polokovy", fun:"Borax, sloučenina boru, se používal k mumifikaci ve starém Egyptě."},
+  {z:6, sym:"C", name:"Uhlík", cat:"Nekovy", fun:"Diamant i tužka jsou čistý uhlík — jen jinak uspořádaný."},
+  {z:7, sym:"N", name:"Dusík", cat:"Nekovy", fun:"Tvoří 78 % vzduchu kolem tebe. Dýcháš ho teď, ale vůbec ho nepotřebuješ."},
+  {z:8, sym:"O", name:"Kyslík", cat:"Nekovy", fun:"Kapalný kyslík je světle modrý a silně magnetický."},
+  {z:9, sym:"F", name:"Fluor", cat:"Halogeny", fun:"Nejreaktivnější prvek na světě. Reaguje i s většinou vzácných plynů."},
+  {z:10, sym:"Ne", name:"Neon", cat:"Vzácné plyny", fun:"Neonové reklamy dnes většinou neon neobsahují — používají se jiné plyny."},
+  {z:11, sym:"Na", name:"Sodík", cat:"Alkalické kovy", fun:"Čistý sodík exploduje při kontaktu s vodou. Sůl ho ale zkrotí."},
+  {z:12, sym:"Mg", name:"Hořčík", cat:"Kovy alk. zemin", fun:"Hoří tak jasně a horce, že ho nelze uhasit vodou — ta ho ještě rozhoří."},
+  {z:13, sym:"Al", name:"Hliník", cat:"Ostatní kovy", fun:"Do roku 1886 byl dražší než zlato. Špička Washingtonova obelisku je z hliníku."},
+  {z:14, sym:"Si", name:"Křemík", cat:"Polokovy", fun:"Celý moderní svět stojí na křemíku — každý čip, procesor, telefon."},
+  {z:15, sym:"P", name:"Fosfor", cat:"Nekovy", fun:"Bílý fosfor svítí ve tmě a byl použit jako zápalná zbraň ve válkách."},
+  {z:16, sym:"S", name:"Síra", cat:"Nekovy", fun:"Ve středověku věřili, že čichání síry odežene ďábla. Zápalem sirných par."},
+  {z:17, sym:"Cl", name:"Chlor", cat:"Halogeny", fun:"Byl použit jako chemická zbraň v 1. světové válce. Žlutozelený jedovatý plyn."},
+  {z:18, sym:"Ar", name:"Argon", cat:"Vzácné plyny", fun:"Tvoří skoro 1 % vzduchu. Jméno pochází z řeckého 'argos' — líný, nečinný."},
+  {z:19, sym:"K", name:"Draslík", cat:"Alkalické kovy", fun:"Značka K pochází z latinského 'kalium'. Banány ho mají hodně, ale ne dost na otravu."},
+  {z:20, sym:"Ca", name:"Vápník", cat:"Kovy alk. zemin", fun:"Tvoje kosti jsou z 70 % vápník. Každých 10 let si celý skelet obnovíš."},
+  {z:21, sym:"Sc", name:"Skandium", cat:"Přechodné kovy", fun:"Tak vzácný, že do roku 1960 bylo na světě pouze 2 kg čistého skandia."},
+  {z:22, sym:"Ti", name:"Titan", cat:"Přechodné kovy", fun:"Biokompatibilní — tělo ho neodmítá, proto se z něj dělají klouby a implantáty."},
+  {z:23, sym:"V", name:"Vanad", cat:"Přechodné kovy", fun:"Pojmenován po Vanadis — severské bohyni krásy. Přidává pevnost do oceli."},
+  {z:24, sym:"Cr", name:"Chrom", cat:"Přechodné kovy", fun:"Rubíny jsou červené díky chrómu. Smaragdy jsou zelené také díky chrómu."},
+  {z:25, sym:"Mn", name:"Mangan", cat:"Přechodné kovy", fun:"Pravěcí lidé používali oxid manganu jako černou barvu do jeskynních maleb."},
+  {z:26, sym:"Fe", name:"Železo", cat:"Přechodné kovy", fun:"Jádro Země je pevná železo-niklová koule velká jako Měsíc."},
+  {z:27, sym:"Co", name:"Kobalt", cat:"Přechodné kovy", fun:"Název pochází od německých 'Kobold' — skřítků, kteří prý hatili práci horníků."},
+  {z:28, sym:"Ni", name:"Nikl", cat:"Přechodné kovy", fun:"Americká 5centová mince se jmenuje 'nickel', ale obsahuje jen 25 % niklu."},
+  {z:29, sym:"Cu", name:"Měď", cat:"Přechodné kovy", fun:"Nejstarší kov, který lidé používali — první artefakty jsou staré přes 10 000 let."},
+  {z:30, sym:"Zn", name:"Zinek", cat:"Přechodné kovy", fun:"Pokrývá ocelové konstrukce proti rzi. Galvanizace — neviditelný, ale důležitý."},
+  {z:31, sym:"Ga", name:"Gallium", cat:"Ostatní kovy", fun:"Taje v dlani při tělesné teplotě. Lze ho nalít do formy a mít 'rtuťový' předmět."},
+  {z:32, sym:"Ge", name:"Germanium", cat:"Polokovy", fun:"Předpověděl jeho existenci Mendelejev dříve, než byl objeven — pojmenoval ho 'eka-křemík'."},
+  {z:33, sym:"As", name:"Arsen", cat:"Polokovy", fun:"Oblíbený jed viktoriánské éry. Říkalo se mu 'dědičný prach' — zákeřný, bez chuti."},
+  {z:34, sym:"Se", name:"Selen", cat:"Nekovy", fun:"Název pochází od Selene — řecké bohyně Měsíce. Nutný pro funkci štítné žlázy."},
+  {z:35, sym:"Br", name:"Brom", cat:"Halogeny", fun:"Jeden ze dvou prvků, které jsou kapalné při pokojové teplotě. (Druhý je rtuť.)"},
+  {z:36, sym:"Kr", name:"Krypton", cat:"Vzácné plyny", fun:"Superman má alergii na Kryptonit — což je fiktivní, ale jméno je od tohoto prvku."},
+  {z:37, sym:"Rb", name:"Rubidium", cat:"Alkalické kovy", fun:"Tak reaktivní, že se musí uchovávat v miniaturních skleněných ampulích zapečetěných voskem."},
+  {z:38, sym:"Sr", name:"Stroncium", cat:"Kovy alk. zemin", fun:"Dává červenou barvu ohňostrojům. Radioaktivní stroncium-90 je produktem jaderných výbuchů."},
+  {z:39, sym:"Y", name:"Yttrium", cat:"Přechodné kovy", fun:"Pojmenováno po vesnici Ytterby ve Švédsku, odkud pochází i Erbium, Terbium a Ytterbium."},
+  {z:40, sym:"Zr", name:"Zirkonium", cat:"Přechodné kovy", fun:"Kubický zirkon — levná náhražka diamantů — je oxidem zirkonia."},
+  {z:41, sym:"Nb", name:"Niob", cat:"Přechodné kovy", fun:"Pojmenován po Niobé z řecké mytologie — dceři Tantala, která věčně plakala."},
+  {z:42, sym:"Mo", name:"Molybden", cat:"Přechodné kovy", fun:"Bez molybdenu by baktérie nedokázaly vázat dusík — a život by vypadal úplně jinak."},
+  {z:43, sym:"Tc", name:"Technecium", cat:"Přechodné kovy", fun:"První prvek vyrobený uměle v laboratoři. V přírodě prakticky neexistuje."},
+  {z:44, sym:"Ru", name:"Ruthenium", cat:"Přechodné kovy", fun:"Pojmenováno po Rusi (Ruthenia). Jeden z nejtvrdších platinových kovů."},
+  {z:45, sym:"Rh", name:"Rhodium", cat:"Přechodné kovy", fun:"Nejdražší kov na světě — kilogram stojí více než kilogram zlata osmkrát."},
+  {z:46, sym:"Pd", name:"Palladium", cat:"Přechodné kovy", fun:"Pojmenováno po asteroidu Pallas, který byl objeven krátce předtím."},
+  {z:47, sym:"Ag", name:"Stříbro", cat:"Přechodné kovy", fun:"Nejlepší elektrický vodič ze všech kovů. A také přirozený antibakteriální materiál."},
+  {z:48, sym:"Cd", name:"Kadmium", cat:"Přechodné kovy", fun:"Silně toxické. Baterie s kadmiem jsou zakázány v EU pro běžné použití."},
+  {z:49, sym:"In", name:"Indium", cat:"Ostatní kovy", fun:"Tvoří dotykové displeje — indium-cín oxid pokrývá každý smartphone na světě."},
+  {z:50, sym:"Sn", name:"Cín", cat:"Ostatní kovy", fun:"Při ohýbání cínové tyče slyšíte praskání zvané 'cínový křik' — krystaly se lámou."},
+  {z:51, sym:"Sb", name:"Antimon", cat:"Polokovy", fun:"Starověké Egypťanky používaly sulfid antimonu jako černé oční stíny — kohl."},
+  {z:52, sym:"Te", name:"Tellur", cat:"Polokovy", fun:"Pojmenováno po Tellus — latinském jménu Země. Extrémně vzácný prvek v zemské kůře."},
+  {z:53, sym:"I", name:"Jód", cat:"Halogeny", fun:"Fialové páry jódu — jedné z mála pevných látek, která přímo sublimuje bez tání."},
+  {z:54, sym:"Xe", name:"Xenon", cat:"Vzácné plyny", fun:"Xenonové výbojky svítí téměř jako sluneční světlo. Používají se jako anestetikum."},
+  {z:55, sym:"Cs", name:"Cesium", cat:"Alkalické kovy", fun:"Atomové hodiny cesiem jsou přesné na 1 sekundu za 300 milionů let."},
+  {z:56, sym:"Ba", name:"Barium", cat:"Kovy alk. zemin", fun:"Síran barnatý se pije před RTG vyšetřením — je nerozpustný a záření nepropustí."},
+  {z:57, sym:"La", name:"Lanthan", cat:"Lanthanoidy", fun:"Dává čočkám fotoaparátů výjimečné optické vlastnosti — ostrost a jasnost."},
+  {z:58, sym:"Ce", name:"Cer", cat:"Lanthanoidy", fun:"Pojmenováno po trpasličí planetě Ceres. Je ho v zemské kůře více než mědi."},
+  {z:59, sym:"Pr", name:"Praseodym", cat:"Lanthanoidy", fun:"Zelené sváteční sklo v kostelích — barvu mu dodává praseodym."},
+  {z:60, sym:"Nd", name:"Neodym", cat:"Lanthanoidy", fun:"Neodymové magnety jsou nejsilnější permanentní magnety na světě. Malé, ale děsivé."},
+  {z:61, sym:"Pm", name:"Prometium", cat:"Lanthanoidy", fun:"Pojmenováno po Prométheovi. Radioaktivní, v přírodě téměř neexistuje."},
+  {z:62, sym:"Sm", name:"Samarium", cat:"Lanthanoidy", fun:"Pojmenováno po ruském mineralogovi Samarském — první prvek pojmenovaný po živém člověku."},
+  {z:63, sym:"Eu", name:"Europium", cat:"Lanthanoidy", fun:"Chrání eurobankovky před padělky — fluoreskuje červeně pod UV světlem."},
+  {z:64, sym:"Gd", name:"Gadolinium", cat:"Lanthanoidy", fun:"Používá se jako kontrastní látka při MRI vyšetřeních mozku a páteře."},
+  {z:65, sym:"Tb", name:"Terbium", cat:"Lanthanoidy", fun:"Pojmenováno po vesnici Ytterby — stejně jako Yttrium, Erbium a Ytterbium."},
+  {z:66, sym:"Dy", name:"Dysprosium", cat:"Lanthanoidy", fun:"Název z řečtiny: 'dysprositos' — těžko dostupný. Byl těžko izolován."},
+  {z:67, sym:"Ho", name:"Holmium", cat:"Lanthanoidy", fun:"Má nejsilnější magnetický moment ze všech prvků. Pojmenováno po Stockholmu."},
+  {z:68, sym:"Er", name:"Erbium", cat:"Lanthanoidy", fun:"Dává růžovou barvu sklu. Používá se v lékařských laserech pro kůži."},
+  {z:69, sym:"Tm", name:"Thulium", cat:"Lanthanoidy", fun:"Pojmenováno po Thule — mytické zemi na konci světa. Jeden z nejdražších lanthanoidů."},
+  {z:70, sym:"Yb", name:"Ytterbium", cat:"Lanthanoidy", fun:"Čtvrté ze čtyř prvků pojmenovaných po vesnici Ytterby. Ta vesnice je slavná."},
+  {z:71, sym:"Lu", name:"Lutecium", cat:"Lanthanoidy", fun:"Pojmenováno po Lutetia — latinském názvu Paříže. Nejtěžší a nejdražší lanthanoid."},
+  {z:72, sym:"Hf", name:"Hafnium", cat:"Přechodné kovy", fun:"Pojmenováno po Hafnia — latinském názvu Kodaně. Skoro vždy doprovází zirkonium."},
+  {z:73, sym:"Ta", name:"Tantal", cat:"Přechodné kovy", fun:"Pojmenováno po Tantalovi z řecké mytologie — kvůli frustraci při jeho izolaci."},
+  {z:74, sym:"W", name:"Wolfram", cat:"Přechodné kovy", fun:"Nejvyšší bod tání ze všech prvků — 3422 °C. Proto se z něj dělají žárovky."},
+  {z:75, sym:"Re", name:"Rhenium", cat:"Přechodné kovy", fun:"Jeden z posledních stabilních prvků, které byly objeveny — až v roce 1925."},
+  {z:76, sym:"Os", name:"Osmium", cat:"Přechodné kovy", fun:"Nejtěžší přírodní prvek na světě — hustší než olovo téměř dvakrát."},
+  {z:77, sym:"Ir", name:"Iridium", cat:"Přechodné kovy", fun:"Vrstva iridia v geologických vrstvách dokazuje dopad meteoritu, který zahubil dinosaury."},
+  {z:78, sym:"Pt", name:"Platina", cat:"Přechodné kovy", fun:"Katalyzátory v autech jsou z platiny — bez ní by výfuky byly mnohem toxičtější."},
+  {z:79, sym:"Au", name:"Zlato", cat:"Přechodné kovy", fun:"Veškeré zlato na Zemi pochází z kolize neutronových hvězd před miliardami let."},
+  {z:80, sym:"Hg", name:"Rtuť", cat:"Přechodné kovy", fun:"Jediný kov kapalný při pokojové teplotě. Starověcí alchymisté ji považovali za základ všech kovů."},
+  {z:81, sym:"Tl", name:"Thallium", cat:"Ostatní kovy", fun:"Oblíbený jed detektivních románů — bez chuti, bez zápachu, příznaky jako chřipka."},
+  {z:82, sym:"Pb", name:"Olovo", cat:"Ostatní kovy", fun:"Římané sladili víno olovnatými nádobami. Někteří historici to dávají za příčinu úpadku říše."},
+  {z:83, sym:"Bi", name:"Bismut", cat:"Ostatní kovy", fun:"Krystaly bizmutu vypadají jako sci-fi architektury — duhové kubické schody."},
+  {z:84, sym:"Po", name:"Polonium", cat:"Polokovy", fun:"Marie Curie ho pojmenovala po své vlasti Polsku. Je extrémně radioaktivní."},
+  {z:85, sym:"At", name:"Astat", cat:"Halogeny", fun:"Nejradioaktivnější přirozený prvek. V celé zemské kůře ho je méně než 30 gramů."},
+  {z:86, sym:"Rn", name:"Radon", cat:"Vzácné plyny", fun:"Radioaktivní plyn pronikající ze země do sklepů — druhá nejčastější příčina rakoviny plic."},
+  {z:87, sym:"Fr", name:"Francium", cat:"Alkalické kovy", fun:"Nejtěžší přirozený alkalický kov. V celé zemské kůře ho existuje méně než 30 gramů."},
+  {z:88, sym:"Ra", name:"Radium", cat:"Kovy alk. zemin", fun:"Ve 20. letech se přidávalo do hodinek — dělaly číselník svítící ve tmě. Způsobovalo rakovinu."},
+  {z:89, sym:"Ac", name:"Aktinium", cat:"Aktinoidy", fun:"Svítí modře ve tmě díky radioaktivnímu záření ionizujícímu vzduch kolem sebe."},
+  {z:90, sym:"Th", name:"Thorium", cat:"Aktinoidy", fun:"Pojmenováno po Thorovi — bohu hromu. Mohlo by pohánět jaderné reaktory bezpečněji než uran."},
+  {z:91, sym:"Pa", name:"Protaktinium", cat:"Aktinoidy", fun:"Jeden z nejnebezpečnějších prvků — radioaktivní a extrémně toxický. Nemá žádné využití."},
+  {z:92, sym:"U", name:"Uran", cat:"Aktinoidy", fun:"Pojmenováno po planetě Uran. Objev radioaktivity uranem změnil celou fyziku."},
+  {z:93, sym:"Np", name:"Neptunium", cat:"Aktinoidy", fun:"Pojmenováno po Neptunu — stejně jako Neptun je za Uranem, neptunium je za uranem v tabulce."},
+  {z:94, sym:"Pu", name:"Plutonium", cat:"Aktinoidy", fun:"Pojmenováno po Plutovi. Méně než 6 kg plutonia stačí k sestrojení atomové bomby."},
+  {z:95, sym:"Am", name:"Americium", cat:"Aktinoidy", fun:"Je v každém detektoru kouře ve tvém domě. Ionizuje vzduch a detekuje kouř."},
+  {z:96, sym:"Cm", name:"Curium", cat:"Aktinoidy", fun:"Pojmenováno po Marii a Pierrovi Curiovým — jedináček mezi prvky pojmenovanými po páru."},
+  {z:97, sym:"Bk", name:"Berkelium", cat:"Aktinoidy", fun:"Pojmenováno po Berkeley v Kalifornii. Syntetizováno poprvé v roce 1949."},
+  {z:98, sym:"Cf", name:"Californium", cat:"Aktinoidy", fun:"Nejdražší prodávaná látka na světě — miligram stojí 27 milionů dolarů."},
+  {z:99, sym:"Es", name:"Einsteinium", cat:"Aktinoidy", fun:"Bylo tajně objeveno v troskách první vodíkové bomby. Pojmenováno po Einsteinovi."},
+  {z:100, sym:"Fm", name:"Fermium", cat:"Aktinoidy", fun:"Také objeveno v troskách bomby. Pojmenováno po Enricu Fermim, otci jaderného reaktoru."},
+  {z:101, sym:"Md", name:"Mendelevium", cat:"Aktinoidy", fun:"Pojmenováno po Mendělejevovi — tvůrci periodické tabulky, která ho samozřejmě obsahuje."},
+  {z:102, sym:"No", name:"Nobelium", cat:"Aktinoidy", fun:"Pojmenováno po Alfredu Nobelovi. Má poločas rozpadu pouhé 58 minut."},
+  {z:103, sym:"Lr", name:"Lawrencium", cat:"Aktinoidy", fun:"Pojmenováno po Ernstu Lawrencovi, vynálezci cyklotronu — stroje na výrobu těžkých prvků."},
+  {z:104, sym:"Rf", name:"Rutherfordium", cat:"Přechodné kovy", fun:"Pojmenováno po Ernestu Rutherfordovi, který objevil atomové jádro. Trvá jen sekundy."},
+  {z:105, sym:"Db", name:"Dubnium", cat:"Přechodné kovy", fun:"Pojmenováno po Dubně v Rusku — kde bylo souběžně syntetizováno s americkým týmem."},
+  {z:106, sym:"Sg", name:"Seaborgium", cat:"Přechodné kovy", fun:"Glenn Seaborg byl prvním živým člověkem, po němž byl prvek pojmenován za jeho života."},
+  {z:107, sym:"Bh", name:"Bohrium", cat:"Přechodné kovy", fun:"Pojmenováno po Nielsi Bohrovi — dánském fyzikovi, který popsal model atomu."},
+  {z:108, sym:"Hs", name:"Hassium", cat:"Přechodné kovy", fun:"Pojmenováno po Hassia — latinském názvu německé spolkové země Hesensko."},
+  {z:109, sym:"Mt", name:"Meitnerium", cat:"Přechodné kovy", fun:"Pojmenováno po Lise Meitnerové — fyzičce, která vysvětlila jaderné štěpení, ale Nobel nedostala."},
+  {z:110, sym:"Ds", name:"Darmstadtium", cat:"Přechodné kovy", fun:"Pojmenováno po Darmstadtu v Německu, kde bylo syntetizováno. Vydrží jen mikrosekundy."},
+  {z:111, sym:"Rg", name:"Roentgenium", cat:"Přechodné kovy", fun:"Pojmenováno po Wilhelmu Röntgenovi — objeviteli rentgenového záření."},
+  {z:112, sym:"Cn", name:"Copernicium", cat:"Přechodné kovy", fun:"Pojmenováno po Mikuláši Koperníkovi — astronomovi, který ukázal, že Země obíhá Slunce."},
+  {z:113, sym:"Nh", name:"Nihonium", cat:"Ostatní kovy", fun:"První prvek syntetizovaný v Asii — v Japonsku. 'Nihon' znamená japonsky Japonsko."},
+  {z:114, sym:"Fl", name:"Flerovium", cat:"Ostatní kovy", fun:"Pojmenováno po Flerovově laboratoři v Dubně. Existuje jen zlomky sekundy."},
+  {z:115, sym:"Mc", name:"Moscovium", cat:"Ostatní kovy", fun:"Pojmenováno po Moskevské oblasti. Syntetizováno v roce 2003, uznáno až v roce 2016."},
+  {z:116, sym:"Lv", name:"Livermorium", cat:"Ostatní kovy", fun:"Pojmenováno po Livermore v Kalifornii — centru amerického jaderného výzkumu."},
+  {z:117, sym:"Ts", name:"Tennessine", cat:"Halogeny", fun:"Pojmenováno po Tennessee — státu, kde sídlí Oak Ridge National Laboratory."},
+  {z:118, sym:"Og", name:"Oganesson", cat:"Vzácné plyny", fun:"Nejtěžší dosud syntetizovaný prvek. Pojmenováno po fyzikovi Jurim Oganesjanovi."},
+];
+
+let mode = 'flash';
+let selectedCats = new Set(['Vše']);
+let filtered = [...ELEMENTS];
+let fcIndex = 0;
+let fcList = [...ELEMENTS];
+let isFlipped = false;
+
+let quizType = 'symbol';
+let quizCorrect = 0;
+let quizStreak = 0;
+let answered = false;
+let quizList = [];
+let quizIndex = 0;
+
+// Build category buttons
+function buildCats() {
+  const cl = document.getElementById('cat-list');
+  cl.innerHTML = '';
+  const allCats = [...new Set(ELEMENTS.map(e => e.cat))];
+  const isAll = selectedCats.has('Vše');
+
+  // "Vše" button spanning full width
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn' + (isAll ? ' active' : '');
+  allBtn.textContent = `Vše (${ELEMENTS.length})`;
+  allBtn.onclick = () => {
+    selectedCats = new Set(['Vše']);
+    buildCats();
+    applyFilter();
+  };
+  cl.appendChild(allBtn);
+
+  allCats.forEach(cat => {
+    const count = ELEMENTS.filter(e => e.cat === cat).length;
+    const btn = document.createElement('button');
+    const isActive = !isAll && selectedCats.has(cat);
+    btn.className = 'cat-btn' + (isActive ? ' active' : '');
+    btn.textContent = `${cat}\n(${count})`;
+    btn.style.whiteSpace = 'pre-line';
+    btn.onclick = () => {
+      if (selectedCats.has(cat)) {
+        selectedCats.delete(cat);
+        if (selectedCats.size === 0) selectedCats.add('Vše');
+      } else {
+        selectedCats.delete('Vše');
+        selectedCats.add(cat);
+      }
+      buildCats();
+      applyFilter();
+    };
+    cl.appendChild(btn);
+  });
+}
+
+function applyFilter() {
+  const isAll = selectedCats.has('Vše');
+  filtered = isAll ? [...ELEMENTS] : ELEMENTS.filter(e => selectedCats.has(e.cat));
+  document.getElementById('stat-total').textContent = filtered.length;
+  fcList = [...filtered];
+  fcIndex = 0;
+  if (mode === 'flash') renderFlash();
+  else startQuiz();
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&m==='flash')||(i===1&&m==='quiz')));
+  document.getElementById('flashcard-mode').style.display = m === 'flash' ? 'block' : 'none';
+  document.getElementById('quiz-mode').style.display = m === 'quiz' ? 'block' : 'none';
+  if (m === 'flash') renderFlash();
+  else startQuiz();
+}
+
+// FLASHCARD
+function renderFlash() {
+  const el = fcList[fcIndex];
+  if (!el) return;
+  document.getElementById('fc-number').textContent = `#${el.z}`;
+  document.getElementById('fc-symbol').textContent = el.sym;
+  document.getElementById('fc-category-badge').textContent = el.cat;
+  document.getElementById('fc-name').textContent = el.name;
+  document.getElementById('fc-detail').textContent = `Protonové číslo: ${el.z} · ${el.cat}`;
+  document.getElementById('fc-funfact').textContent = el.fun || '';
+  
+  const pct = ((fcIndex + 1) / fcList.length * 100).toFixed(0);
+  document.getElementById('fc-progress').style.width = pct + '%';
+  document.getElementById('fc-progress-text').textContent = `${fcIndex + 1} / ${fcList.length}`;
+
+  // Reset flip
+  isFlipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
+}
+
+function nextCard() {
+  fcIndex = (fcIndex + 1) % fcList.length;
+  renderFlash();
+}
+
+function prevCard() {
+  fcIndex = (fcIndex - 1 + fcList.length) % fcList.length;
+  renderFlash();
+}
+
+function shuffleCards() {
+  fcList = fcList.sort(() => Math.random() - 0.5);
+  fcIndex = 0;
+  renderFlash();
+}
+
+// QUIZ
+function setQuizType(t) {
+  quizType = t;
+  document.querySelectorAll('.quiz-type-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('qt-' + (t==='mix'?'mix':t==='name'?'name':'sym')).classList.add('active');
+  startQuiz();
+}
+
+function startQuiz() {
+  quizList = [...filtered].sort(() => Math.random() - 0.5);
+  quizIndex = 0;
+  quizCorrect = 0;
+  quizStreak = 0;
+  document.getElementById('stat-correct').textContent = 0;
+  document.getElementById('stat-streak').textContent = 0;
+  renderQuiz();
+}
+
+function getEffectiveType() {
+  if (quizType === 'mix') return Math.random() < 0.5 ? 'symbol' : 'name';
+  return quizType;
+}
+
+let currentType;
+let correctAnswer;
+
+function renderQuiz() {
+  if (quizList.length === 0) return;
+  answered = false;
+  document.getElementById('feedback').className = 'feedback-text';
+  document.getElementById('btn-next-quiz').classList.remove('show');
+
+  const el = quizList[quizIndex % quizList.length];
+  currentType = getEffectiveType();
+  
+  const qContent = document.getElementById('q-content');
+  const qLabel = document.getElementById('q-label');
+  const qSub = document.getElementById('q-sub');
+
+  if (currentType === 'symbol') {
+    qLabel.textContent = 'Jak se jmenuje tento prvek?';
+    qContent.innerHTML = `<div class="quiz-symbol">${el.sym}</div>`;
+    qSub.textContent = `Protonové číslo: ${el.z}`;
+    correctAnswer = el.name;
+  } else {
+    qLabel.textContent = 'Jaká je chemická značka?';
+    qContent.innerHTML = `<div class="quiz-name-q">${el.name}</div>`;
+    qSub.textContent = `Protonové číslo: ${el.z} · ${el.cat}`;
+    correctAnswer = el.sym;
+  }
+
+  // Generate 4 options
+  const pool = filtered.filter(e => e.z !== el.z);
+  const wrong = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [el, ...wrong].sort(() => Math.random() - 0.5);
+
+  const answersDiv = document.getElementById('answers');
+  answersDiv.innerHTML = '';
+  options.forEach(opt => {
+    const val = currentType === 'symbol' ? opt.name : opt.sym;
+    const sub = currentType === 'symbol' ? opt.cat : opt.name;
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `${val}<span class="answer-sub">${sub}</span>`;
+    btn.onclick = () => checkAnswer(btn, val);
+    answersDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(btn, val) {
+  if (answered) return;
+  answered = true;
+
+  const fb = document.getElementById('feedback');
+  const allBtns = document.querySelectorAll('.answer-btn');
+
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const bVal = b.childNodes[0].textContent.trim();
+    if (bVal === correctAnswer) b.classList.add('correct');
+  });
+
+  if (val === correctAnswer) {
+    btn.classList.add('correct');
+    quizCorrect++;
+    quizStreak++;
+    document.getElementById('stat-correct').textContent = quizCorrect;
+    document.getElementById('stat-streak').textContent = quizStreak;
+    fb.textContent = quizStreak >= 3 ? `🔥 Série ${quizStreak}! Skvělé!` : '✓ Správně!';
+    fb.className = 'feedback-text visible ok';
+    spawnConfetti();
+    if (quizStreak >= 3) showStreakBadge(quizStreak);
+  } else {
+    btn.classList.add('wrong');
+    quizStreak = 0;
+    document.getElementById('stat-streak').textContent = 0;
+    fb.textContent = `✗ Správná odpověď: ${correctAnswer}`;
+    fb.className = 'feedback-text visible bad';
+  }
+
+  document.getElementById('btn-next-quiz').classList.add('show');
+}
+
+function nextQuiz() {
+  quizIndex++;
+  if (quizIndex >= quizList.length) {
+    quizList = [...filtered].sort(() => Math.random() - 0.5);
+    quizIndex = 0;
+  }
+  renderQuiz();
+}
+
+function _oldSpawnConfetti_disabled() {
+  for (let i = 0; i < 12; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `
+      left:${30 + Math.random()*40}%;
+      top:40%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay:${Math.random()*0.3}s;
+      animation-duration:${0.6 + Math.random()*0.4}s;
+    `;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 1000);
+  }
+}
+
+function showStreakBadge(n) {
+  const b = document.getElementById('streak-badge');
+  b.textContent = `🔥 ${n}x série!`;
+  b.style.display = 'block';
+  setTimeout(() => b.style.display = 'none', 2000);
+}
+
+// ===== SKIN SYSTEM =====
+const SKINS = [
+  {
+    id: 'dark-pink',
+    label: '🖤',
+    title: 'Dark Rose',
+    gradient: 'linear-gradient(135deg, #ff2d78, #c800ff)',
+    vars: {
+      '--bg': '#0a0007',
+      '--surface': '#110010',
+      '--card': '#18001a',
+      '--border': '#3a003d',
+      '--accent': '#ff2d78',
+      '--accent2': '#c800ff',
+      '--accent3': '#ff80b0',
+      '--text': '#f0d0e8',
+      '--muted': '#c090aa',
+      '--correct': '#ff6eb0',
+      '--wrong': '#c800ff',
+    },
+    bodyFont: "'Cormorant Garamond', serif",
+    h1Font: "'DM Serif Display', serif",
+    h1Style: 'italic',
+    bgGlow: 'radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,45,120,0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 80% 80%, rgba(200,0,255,0.07) 0%, transparent 60%)',
+    cardFrontBg: 'linear-gradient(135deg, #18001a, #1a001f)',
+    cardBackBg: 'linear-gradient(135deg, #0d0012, #150010)',
+    confetti: ['#ff2d78','#c800ff','#ff80b0','#fff','#ff006e'],
+  },
+  {
+    id: 'retro-terminal',
+    label: '💾',
+    title: 'Terminal',
+    gradient: 'linear-gradient(135deg, #00ff41, #003300)',
+    vars: {
+      '--bg': '#000800',
+      '--surface': '#001200',
+      '--card': '#001a00',
+      '--border': '#004400',
+      '--accent': '#00ff41',
+      '--accent2': '#00cc33',
+      '--accent3': '#88ff99',
+      '--text': '#00ff41',
+      '--muted': '#33cc55',
+      '--correct': '#00ff41',
+      '--wrong': '#ff3300',
+    },
+    bodyFont: "'VT323', monospace",
+    h1Font: "'VT323', monospace",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(0,255,65,0.04) 0%, transparent 70%)',
+    cardFrontBg: 'linear-gradient(135deg, #001400, #001800)',
+    cardBackBg: 'linear-gradient(135deg, #001000, #001500)',
+    confetti: ['#00ff41','#00cc33','#88ff99','#fff','#004400'],
+    extraCSS: `
+      h1 { font-size: 48px !important; letter-spacing: 2px; }
+      .element-symbol { font-family: 'VT323', monospace !important; font-size: 90px !important; }
+      .element-name { font-family: 'VT323', monospace !important; font-size: 44px !important; font-style: normal !important; }
+      .quiz-symbol { font-family: 'VT323', monospace !important; font-size: 100px !important; }
+      .quiz-name-q { font-family: 'VT323', monospace !important; font-size: 44px !important; font-style: normal !important; }
+      .btn-next-quiz { font-family: 'VT323', monospace !important; font-size: 22px !important; font-style: normal !important; color: #000 !important; }
+      .mode-tab.active { color: #000 !important; }
+      .btn-next { color: #000 !important; }
+      body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
+    `,
+  },
+  {
+    id: 'pastel-kawaii',
+    label: '🌸',
+    title: 'Kawaii',
+    gradient: 'linear-gradient(135deg, #ffb3d9, #b3d9ff)',
+    vars: {
+      '--bg': '#fff0f8',
+      '--surface': '#ffe0f0',
+      '--card': '#ffd6ec',
+      '--border': '#ffb3d9',
+      '--accent': '#ff69b4',
+      '--accent2': '#a78bfa',
+      '--accent3': '#f472b6',
+      '--text': '#4a1a3a',
+      '--muted': '#9a5a7a',
+      '--correct': '#22c55e',
+      '--wrong': '#ef4444',
+    },
+    bodyFont: "'Nunito', sans-serif",
+    h1Font: "'Nunito', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 60% 40% at 30% 30%, rgba(255,105,180,0.15) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 70% 70%, rgba(167,139,250,0.15) 0%, transparent 60%)',
+    cardFrontBg: 'linear-gradient(135deg, #ffe4f4, #ffd6ec)',
+    cardBackBg: 'linear-gradient(135deg, #f8d0ff, #e8d0ff)',
+    confetti: ['#ff69b4','#a78bfa','#f472b6','#fbbf24','#34d399'],
+    extraCSS: `
+      h1 { font-weight: 900 !important; font-style: normal !important; color: #d6006e !important; }
+      h1 span { color: #a78bfa !important; }
+      .element-symbol { color: #d6006e !important; }
+      .logo { color: #d6006e !important; }
+      .mode-tab.active { color: #fff !important; }
+      .quiz-symbol { color: #d6006e !important; }
+      .element-name { font-style: normal !important; color: #4a1a3a !important; }
+      .quiz-name-q { font-style: normal !important; }
+      .element-funfact { color: #a78bfa !important; }
+      .stat-val { color: #d6006e !important; }
+      .progress-fill { background: #ff69b4 !important; }
+      .card-back { border-color: #ff69b4 !important; }
+    `,
+  },
+  {
+    id: 'brutalist',
+    label: '⚡',
+    title: 'Brutalist',
+    gradient: 'linear-gradient(135deg, #ffff00, #000000)',
+    vars: {
+      '--bg': '#ffffff',
+      '--surface': '#f0f0f0',
+      '--card': '#e8e8e8',
+      '--border': '#000000',
+      '--accent': '#ff0000',
+      '--accent2': '#0000ff',
+      '--accent3': '#ffff00',
+      '--text': '#000000',
+      '--muted': '#555555',
+      '--correct': '#007700',
+      '--wrong': '#ff0000',
+    },
+    bodyFont: "'Bebas Neue', sans-serif",
+    h1Font: "'Bebas Neue', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'none',
+    cardFrontBg: '#f0f0f0',
+    cardBackBg: '#000000',
+    confetti: ['#ff0000','#0000ff','#ffff00','#000','#00ff00'],
+    extraCSS: `
+      * { border-radius: 0 !important; }
+      body { background: #fff !important; }
+      h1 { font-size: 52px !important; letter-spacing: 3px; color: #000 !important; font-style: normal !important; }
+      h1 span { color: #ff0000 !important; }
+      .logo { color: #ff0000 !important; letter-spacing: 6px; }
+      .element-symbol { font-family: 'Bebas Neue', sans-serif !important; font-size: 88px !important; color: #ff0000 !important; }
+      .element-name { font-family: 'Bebas Neue', sans-serif !important; font-size: 44px !important; font-style: normal !important; color: #fff !important; }
+      .element-detail { color: #aaa !important; }
+      .element-funfact { color: #ffff00 !important; }
+      .quiz-symbol { font-family: 'Bebas Neue', sans-serif !important; font-size: 100px !important; color: #ff0000 !important; }
+      .quiz-name-q { font-family: 'Bebas Neue', sans-serif !important; font-size: 44px !important; font-style: normal !important; }
+      .mode-tabs, .stat, .quiz-question, .answer-btn, .flashcard-area { border: 3px solid #000 !important; box-shadow: 4px 4px 0 #000 !important; }
+      .mode-tab.active { background: #000 !important; color: #ffff00 !important; }
+      .btn { border: 3px solid #000 !important; box-shadow: 3px 3px 0 #000 !important; }
+      .btn-next { background: #ff0000 !important; color: #fff !important; }
+      .btn-next-quiz { border-radius: 0 !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 22px !important; font-style: normal !important; box-shadow: 4px 4px 0 #000 !important; }
+      .stat-val { color: #ff0000 !important; }
+      .progress-fill { background: #ff0000 !important; }
+      .cat-btn.active { border-color: #ff0000 !important; color: #ff0000 !important; }
+    `,
+  },
+  {
+    id: 'midnight-ocean',
+    label: '🌊',
+    title: 'Ocean',
+    gradient: 'linear-gradient(135deg, #0ea5e9, #0d9488)',
+    vars: {
+      '--bg': '#020b18',
+      '--surface': '#041428',
+      '--card': '#061c38',
+      '--border': '#0e3a6a',
+      '--accent': '#38bdf8',
+      '--accent2': '#2dd4bf',
+      '--accent3': '#7dd3fc',
+      '--text': '#e0f2fe',
+      '--muted': '#6db4d8',
+      '--correct': '#34d399',
+      '--wrong': '#f87171',
+    },
+    bodyFont: "'Outfit', sans-serif",
+    h1Font: "'Outfit', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 70% 50% at 10% 80%, rgba(56,189,248,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 60% at 90% 20%, rgba(45,212,191,0.1) 0%, transparent 60%)',
+    cardFrontBg: 'linear-gradient(135deg, #061c38, #071e3d)',
+    cardBackBg: 'linear-gradient(135deg, #031020, #051628)',
+    confetti: ['#38bdf8','#2dd4bf','#7dd3fc','#fff','#0ea5e9'],
+    extraCSS: `
+      h1 { font-weight: 700 !important; font-style: normal !important; letter-spacing: -1px; }
+      h1 span { color: #2dd4bf !important; }
+      .element-symbol { color: #38bdf8 !important; }
+      .logo { color: #38bdf8 !important; }
+      .quiz-symbol { color: #38bdf8 !important; }
+      .element-funfact { color: #7dd3fc !important; }
+      .stat-val { color: #38bdf8 !important; }
+      .progress-fill { background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important; }
+      .card-back { border-color: #38bdf8 !important; }
+      .mode-tab.active { background: #38bdf8 !important; color: #020b18 !important; }
+      .btn-next { background: #38bdf8 !important; color: #020b18 !important; }
+      .btn-next-quiz { background: #38bdf8 !important; color: #020b18 !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important; }
+    `,
+  },
+
+  // SKIN 6: Greyscale
+  {
+    id: 'greyscale',
+    label: '◑',
+    title: 'Grayscale',
+    gradient: 'linear-gradient(135deg, #ffffff, #333333)',
+    vars: {
+      '--bg': '#111111',
+      '--surface': '#1c1c1c',
+      '--card': '#252525',
+      '--border': '#404040',
+      '--accent': '#eeeeee',
+      '--accent2': '#aaaaaa',
+      '--accent3': '#cccccc',
+      '--text': '#f0f0f0',
+      '--muted': '#888888',
+      '--correct': '#cccccc',
+      '--wrong': '#555555',
+    },
+    bodyFont: "'Outfit', sans-serif",
+    h1Font: "'Bebas Neue', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%)',
+    cardFrontBg: 'linear-gradient(135deg, #222222, #2a2a2a)',
+    cardBackBg: 'linear-gradient(135deg, #181818, #202020)',
+    confetti: ['#ffffff','#cccccc','#888888','#444444','#eeeeee'],
+    extraCSS: `
+      h1 { font-size: 50px !important; letter-spacing: 4px; font-style: normal !important; color: #fff !important; }
+      h1 span { color: #aaa !important; }
+      .logo { color: #aaa !important; }
+      .element-symbol { color: #ffffff !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 86px !important; }
+      .element-name { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; color: #f0f0f0 !important; letter-spacing: 2px; }
+      .quiz-symbol { color: #ffffff !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 96px !important; }
+      .quiz-name-q { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; }
+      .element-funfact { color: #aaaaaa !important; }
+      .stat-val { color: #eeeeee !important; }
+      .progress-fill { background: #eeeeee !important; }
+      .card-back { border-color: #666 !important; }
+      .mode-tab.active { background: #eeeeee !important; color: #111 !important; }
+      .btn-next { background: #eeeeee !important; color: #111 !important; }
+      .btn-next-quiz { background: #eeeeee !important; color: #111 !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 22px !important; letter-spacing: 2px; }
+      .cat-btn.active { border-color: #eee !important; color: #eee !important; }
+      .answer-btn.correct { border-color: #fff !important; color: #fff !important; }
+      .answer-btn.wrong { border-color: #555 !important; color: #888 !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #fff, #555) !important; }
+      filter: grayscale(1);
+    `,
+  },
+
+  // SKIN 7: Zen Forest (zelená, uklidňující)
+  {
+    id: 'zen-forest',
+    label: '🌿',
+    title: 'Zen Forest',
+    gradient: 'linear-gradient(135deg, #4ade80, #14532d)',
+    vars: {
+      '--bg': '#0a1a0e',
+      '--surface': '#0f2414',
+      '--card': '#132d18',
+      '--border': '#1e4a26',
+      '--accent': '#4ade80',
+      '--accent2': '#86efac',
+      '--accent3': '#bbf7d0',
+      '--text': '#dcfce7',
+      '--muted': '#6db882',
+      '--correct': '#4ade80',
+      '--wrong': '#fb923c',
+    },
+    bodyFont: "'Nunito', sans-serif",
+    h1Font: "'Playfair Display', serif",
+    h1Style: 'italic',
+    bgGlow: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(74,222,128,0.07) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 20% 10%, rgba(134,239,172,0.05) 0%, transparent 60%)',
+    cardFrontBg: 'linear-gradient(160deg, #122a16, #0f2212)',
+    cardBackBg: 'linear-gradient(160deg, #0a1a0e, #101e12)',
+    confetti: ['#4ade80','#86efac','#bbf7d0','#ffffff','#16a34a'],
+    extraCSS: `
+      h1 { font-size: 38px !important; font-weight: 700 !important; color: #dcfce7 !important; letter-spacing: -0.5px; }
+      h1 span { color: #4ade80 !important; }
+      .logo { color: #4ade80 !important; }
+      .element-symbol { color: #4ade80 !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 78px !important; }
+      .element-name { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #dcfce7 !important; font-size: 34px !important; }
+      .quiz-symbol { color: #4ade80 !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 88px !important; }
+      .quiz-name-q { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #dcfce7 !important; }
+      .element-funfact { color: #86efac !important; }
+      .stat-val { color: #4ade80 !important; }
+      .progress-fill { background: linear-gradient(90deg, #4ade80, #86efac) !important; }
+      .card-back { border-color: #4ade80 !important; }
+      .mode-tab.active { background: #4ade80 !important; color: #0a1a0e !important; }
+      .btn-next { background: #4ade80 !important; color: #0a1a0e !important; }
+      .btn-next-quiz { background: #4ade80 !important; color: #0a1a0e !important; font-family: 'Nunito', sans-serif !important; font-weight: 700 !important; }
+      .cat-btn.active { border-color: #4ade80 !important; color: #4ade80 !important; background: rgba(74,222,128,0.08) !important; }
+      .answer-btn:hover:not(:disabled) { border-color: #4ade80 !important; background: rgba(74,222,128,0.08) !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #4ade80, #86efac) !important; }
+      .mode-tabs, .stat, .flashcard-area { box-shadow: 0 0 20px rgba(74,222,128,0.05) !important; }
+    `,
+  },
+
+  // SKIN 8: Alchymista (zlatá + tmavě hnědá, pergamen)
+  {
+    id: 'alchemist',
+    label: '⚗️',
+    title: 'Alchymista',
+    gradient: 'linear-gradient(135deg, #f59e0b, #78350f)',
+    vars: {
+      '--bg': '#120b00',
+      '--surface': '#1c1000',
+      '--card': '#261600',
+      '--border': '#4a2e00',
+      '--accent': '#f59e0b',
+      '--accent2': '#d97706',
+      '--accent3': '#fcd34d',
+      '--text': '#fef3c7',
+      '--muted': '#d4a055',
+      '--correct': '#f59e0b',
+      '--wrong': '#ef4444',
+    },
+    bodyFont: "'Cormorant Garamond', serif",
+    h1Font: "'Playfair Display', serif",
+    h1Style: 'italic',
+    bgGlow: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(245,158,11,0.06) 0%, transparent 70%)',
+    cardFrontBg: 'linear-gradient(135deg, #1e1000, #261400)',
+    cardBackBg: 'linear-gradient(135deg, #140c00, #1a1000)',
+    confetti: ['#f59e0b','#fcd34d','#d97706','#fff8e1','#b45309'],
+    extraCSS: `
+      h1 { color: #fef3c7 !important; font-size: 40px !important; }
+      h1 span { color: #f59e0b !important; }
+      .logo { color: #f59e0b !important; }
+      .element-symbol { color: #f59e0b !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 76px !important; text-shadow: 0 0 20px rgba(245,158,11,0.4); }
+      .element-name { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #fef3c7 !important; }
+      .quiz-symbol { color: #f59e0b !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 88px !important; text-shadow: 0 0 24px rgba(245,158,11,0.4); }
+      .quiz-name-q { font-family: 'Playfair Display', serif !important; font-style: italic !important; }
+      .element-funfact { color: #fcd34d !important; }
+      .stat-val { color: #f59e0b !important; }
+      .progress-fill { background: linear-gradient(90deg, #f59e0b, #fcd34d) !important; }
+      .card-back { border-color: #f59e0b !important; box-shadow: 0 0 16px rgba(245,158,11,0.15) inset !important; }
+      .mode-tab.active { background: #f59e0b !important; color: #120b00 !important; }
+      .btn-next { background: #f59e0b !important; color: #120b00 !important; }
+      .btn-next-quiz { background: #f59e0b !important; color: #120b00 !important; font-family: 'Playfair Display', serif !important; font-style: italic !important; font-size: 18px !important; }
+      .cat-btn.active { border-color: #f59e0b !important; color: #f59e0b !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #f59e0b, #fcd34d) !important; }
+      .mode-tabs { border-color: #4a2e00 !important; }
+    `,
+  },
+
+  // SKIN 9: Vaporwave (retro 80s synth, fialová + azurová)
+  {
+    id: 'vaporwave',
+    label: '🌴',
+    title: 'Vaporwave',
+    gradient: 'linear-gradient(135deg, #ff71ce, #01cdfe, #b967ff)',
+    vars: {
+      '--bg': '#0d001a',
+      '--surface': '#130026',
+      '--card': '#1a0033',
+      '--border': '#4d0080',
+      '--accent': '#ff71ce',
+      '--accent2': '#01cdfe',
+      '--accent3': '#b967ff',
+      '--text': '#ffe4ff',
+      '--muted': '#cc88cc',
+      '--correct': '#05ffa1',
+      '--wrong': '#ff71ce',
+    },
+    bodyFont: "'Outfit', sans-serif",
+    h1Font: "'Bebas Neue', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 100% 40% at 50% 100%, rgba(255,113,206,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 10%, rgba(1,205,254,0.1) 0%, transparent 60%)',
+    cardFrontBg: 'linear-gradient(160deg, #1a0033, #000d26)',
+    cardBackBg: 'linear-gradient(160deg, #0d0020, #001a26)',
+    confetti: ['#ff71ce','#01cdfe','#b967ff','#05ffa1','#fffb96'],
+    extraCSS: `
+      body { background-image: linear-gradient(rgba(255,113,206,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(1,205,254,0.03) 1px, transparent 1px) !important; background-size: 40px 40px !important; }
+      h1 { font-size: 50px !important; letter-spacing: 5px; color: #ff71ce !important; text-shadow: 0 0 20px rgba(255,113,206,0.6), 2px 2px 0 #01cdfe !important; font-style: normal !important; }
+      h1 span { color: #01cdfe !important; text-shadow: 0 0 20px rgba(1,205,254,0.6) !important; }
+      .logo { color: #b967ff !important; letter-spacing: 5px; }
+      .element-symbol { color: #ff71ce !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 88px !important; text-shadow: 0 0 16px rgba(255,113,206,0.7), 3px 3px 0 #01cdfe !important; }
+      .element-name { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; color: #ffe4ff !important; letter-spacing: 3px; text-shadow: 1px 1px 0 #01cdfe !important; }
+      .quiz-symbol { color: #ff71ce !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 96px !important; text-shadow: 0 0 20px rgba(255,113,206,0.7), 3px 3px 0 #01cdfe !important; }
+      .quiz-name-q { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; letter-spacing: 3px; text-shadow: 1px 1px 0 #01cdfe !important; }
+      .element-funfact { color: #b967ff !important; }
+      .stat-val { color: #01cdfe !important; text-shadow: 0 0 10px rgba(1,205,254,0.5) !important; }
+      .progress-fill { background: linear-gradient(90deg, #ff71ce, #01cdfe, #b967ff) !important; }
+      .card-back { border-color: #ff71ce !important; box-shadow: 0 0 20px rgba(255,113,206,0.2) inset !important; }
+      .mode-tab.active { background: linear-gradient(135deg, #ff71ce, #b967ff) !important; color: #fff !important; }
+      .btn-next { background: linear-gradient(135deg, #ff71ce, #b967ff) !important; color: #fff !important; }
+      .btn-next-quiz { background: linear-gradient(135deg, #ff71ce, #01cdfe) !important; color: #fff !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 22px !important; letter-spacing: 3px; }
+      .cat-btn.active { border-color: #ff71ce !important; color: #ff71ce !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #ff71ce, #01cdfe, #b967ff) !important; }
+      .answer-btn:hover:not(:disabled) { border-color: #ff71ce !important; background: rgba(255,113,206,0.1) !important; }
+    `,
+  },
+
+  // SKIN 10: Starý papír / Sépia
+  {
+    id: 'sepia',
+    label: '📜',
+    title: 'Sépia',
+    gradient: 'linear-gradient(135deg, #c9a96e, #5c3d1a)',
+    vars: {
+      '--bg': '#f4e8d0',
+      '--surface': '#ede0c4',
+      '--card': '#e8d8b8',
+      '--border': '#c8a878',
+      '--accent': '#7c4a1a',
+      '--accent2': '#a0622a',
+      '--accent3': '#5c3010',
+      '--text': '#2a1a08',
+      '--muted': '#4a3520',
+      '--correct': '#3a6a2a',
+      '--wrong': '#8a2a1a',
+    },
+    bodyFont: "'Cormorant Garamond', serif",
+    h1Font: "'Playfair Display', serif",
+    h1Style: 'italic',
+    bgGlow: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(160,100,40,0.08) 0%, transparent 70%)',
+    cardFrontBg: 'linear-gradient(135deg, #e8d8b8, #decca0)',
+    cardBackBg: 'linear-gradient(135deg, #d4b888, #c8a870)',
+    confetti: ['#7c4a1a','#c9a96e','#a0622a','#5c3010','#e8d8b8'],
+    extraCSS: `
+      body { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") !important; }
+      h1 { color: #2a1a08 !important; font-size: 38px !important; }
+      h1 span { color: #7c4a1a !important; }
+      .logo { color: #7c4a1a !important; }
+      .element-symbol { color: #7c4a1a !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 76px !important; }
+      .element-number { color: #a08060 !important; }
+      .element-name { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1a0e04 !important; }
+      .quiz-symbol { color: #7c4a1a !important; font-family: 'Playfair Display', serif !important; font-style: italic; font-size: 88px !important; }
+      .quiz-name-q { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1a0e04 !important; }
+      .element-funfact { color: #5c3010 !important; font-style: italic; }
+      .element-detail { color: #4a3520 !important; }
+      .stat-val { color: #7c4a1a !important; }
+      .stat-label { color: #4a3520 !important; }
+      .progress-fill { background: #7c4a1a !important; }
+      .progress-bar { background: #c8a878 !important; }
+      .card-back { border-color: #a0622a !important; }
+      .card-face { border-color: #c8a878 !important; }
+      .mode-tabs { background: #ede0c4 !important; border-color: #c8a878 !important; }
+      .mode-tab { color: #4a3520 !important; }
+      .mode-tab.active { background: #7c4a1a !important; color: #f4e8d0 !important; }
+      .btn-prev { background: #e8d8b8 !important; color: #2a1a08 !important; border-color: #c8a878 !important; }
+      .btn-next { background: #7c4a1a !important; color: #f4e8d0 !important; }
+      .btn-next-quiz { background: #7c4a1a !important; color: #f4e8d0 !important; font-family: 'Playfair Display', serif !important; font-style: italic !important; font-size: 18px !important; }
+      .cat-btn { color: #4a3520 !important; border-color: #c8a878 !important; }
+      .cat-btn.active { border-color: #7c4a1a !important; color: #7c4a1a !important; background: rgba(124,74,26,0.08) !important; }
+      .stat { background: #ede0c4 !important; border-color: #c8a878 !important; }
+      .answer-btn { background: #e8d8b8 !important; color: #2a1a08 !important; border-color: #c8a878 !important; }
+      .answer-btn:hover:not(:disabled) { border-color: #7c4a1a !important; background: #decca0 !important; }
+      .answer-btn.correct { border-color: #3a6a2a !important; color: #3a6a2a !important; background: rgba(58,106,42,0.1) !important; }
+      .answer-btn.wrong { border-color: #8a2a1a !important; color: #8a2a1a !important; background: rgba(138,42,26,0.1) !important; }
+      .quiz-question { background: #e8d8b8 !important; border-color: #c8a878 !important; }
+      .question-label { color: #6a4828 !important; }
+      .quiz-sub { color: #4a3520 !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #7c4a1a, #c9a96e) !important; }
+      .feedback-text.ok { color: #3a6a2a !important; }
+      .feedback-text.bad { color: #8a2a1a !important; }
+      .flip-hint { color: #6a4828 !important; }
+      .progress-text { color: #4a3520 !important; }
+      .skin-wrap-label { color: #4a3520 !important; }
+    `,
+  },
+];
+
+  // SKIN 11: White Noise (bílé pozadí, černé písmo — inverze Grayscale)
+  SKINS.push({
+    id: 'white-noise',
+    label: '☐',
+    title: 'White Noise',
+    gradient: 'linear-gradient(135deg, #000000, #ffffff)',
+    vars: {
+      '--bg': '#ffffff',
+      '--surface': '#f2f2f2',
+      '--card': '#e8e8e8',
+      '--border': '#cccccc',
+      '--accent': '#111111',
+      '--accent2': '#444444',
+      '--accent3': '#666666',
+      '--text': '#111111',
+      '--muted': '#444444',
+      '--correct': '#1a1a1a',
+      '--wrong': '#888888',
+    },
+    bodyFont: "'Outfit', sans-serif",
+    h1Font: "'Bebas Neue', sans-serif",
+    h1Style: 'normal',
+    bgGlow: 'none',
+    cardFrontBg: 'linear-gradient(135deg, #f0f0f0, #e8e8e8)',
+    cardBackBg: 'linear-gradient(135deg, #222222, #111111)',
+    confetti: ['#111111','#444444','#888888','#000000','#cccccc'],
+    extraCSS: `
+      body::before { display: none !important; }
+      h1 { font-size: 50px !important; letter-spacing: 4px; font-style: normal !important; color: #111 !important; }
+      h1 span { color: #555 !important; }
+      .logo { color: #111 !important; }
+      .element-symbol { color: #111 !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 86px !important; }
+      .element-name { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; color: #fff !important; letter-spacing: 2px; }
+      .element-detail { color: #aaa !important; }
+      .element-number { color: #666 !important; }
+      .element-funfact { color: #ccc !important; font-style: italic; }
+      .quiz-symbol { color: #111 !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 96px !important; }
+      .quiz-name-q { font-family: 'Bebas Neue', sans-serif !important; font-size: 42px !important; font-style: normal !important; color: #111 !important; }
+      .quiz-sub { color: #444 !important; }
+      .question-label { color: #555 !important; }
+      .stat-val { color: #111 !important; }
+      .stat-label { color: #444 !important; }
+      .stat { background: #f2f2f2 !important; border-color: #ccc !important; }
+      .progress-fill { background: #111 !important; }
+      .progress-bar { background: #ddd !important; }
+      .progress-text { color: #444 !important; }
+      .card-face.card-front { border-color: #bbb !important; }
+      .card-back { border-color: #333 !important; }
+      .mode-tabs { background: #f2f2f2 !important; border-color: #ccc !important; }
+      .mode-tab { color: #444 !important; font-family: 'Outfit', sans-serif !important; }
+      .mode-tab.active { background: #111 !important; color: #fff !important; }
+      .btn-prev { background: #f0f0f0 !important; color: #111 !important; border-color: #bbb !important; }
+      .btn-next { background: #111 !important; color: #fff !important; }
+      .btn-shuffle { color: #555 !important; border-color: #ccc !important; }
+      .btn-next-quiz { background: #111 !important; color: #fff !important; font-family: 'Bebas Neue', sans-serif !important; font-size: 22px !important; letter-spacing: 2px; }
+      .cat-btn { color: #444 !important; border-color: #ccc !important; }
+      .cat-btn.active { border-color: #111 !important; color: #111 !important; background: rgba(0,0,0,0.05) !important; }
+      .answer-btn { background: #f0f0f0 !important; color: #111 !important; border-color: #bbb !important; font-family: 'Outfit', sans-serif !important; }
+      .answer-btn:hover:not(:disabled) { border-color: #111 !important; background: #e0e0e0 !important; }
+      .answer-btn.correct { border-color: #111 !important; color: #111 !important; background: rgba(0,0,0,0.08) !important; }
+      .answer-btn.wrong { border-color: #888 !important; color: #888 !important; background: rgba(0,0,0,0.04) !important; }
+      .answer-sub { color: #666 !important; }
+      .quiz-question { background: #f2f2f2 !important; border-color: #ccc !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #111, #888) !important; }
+      .quiz-type-btn { color: #555 !important; border-color: #ccc !important; }
+      .quiz-type-btn.active { border-color: #111 !important; color: #111 !important; background: rgba(0,0,0,0.06) !important; }
+      .feedback-text.ok { color: #111 !important; }
+      .feedback-text.bad { color: #888 !important; }
+      .flip-hint { color: #666 !important; }
+      .skin-wrap-label { color: #666 !important; }
+      .streak { background: #111 !important; color: #fff !important; }
+    `,
+  });
+
+let currentSkin = 0;
+let extraStyleEl = null;
+
+function buildSkinBar() {
+  const bar = document.getElementById('skin-bar');
+  bar.innerHTML = '';
+  SKINS.forEach((skin, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'skin-btn' + (i === currentSkin ? ' active' : '');
+    btn.title = skin.title;
+    btn.style.background = skin.gradient;
+    btn.textContent = skin.label;
+    btn.style.fontSize = '18px';
+    btn.style.lineHeight = '30px';
+    btn.onclick = () => applySkin(i);
+    bar.appendChild(btn);
+  });
+}
+
+function applySkin(index) {
+  currentSkin = index;
+  const skin = SKINS[index];
+  const root = document.documentElement;
+
+  // Apply CSS vars
+  Object.entries(skin.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+
+  // Apply fonts
+  document.body.style.fontFamily = skin.bodyFont;
+  const h1 = document.querySelector('h1');
+  if (h1) { h1.style.fontFamily = skin.h1Font; h1.style.fontStyle = skin.h1Style; }
+
+  // Apply bg glow
+  document.body.style.setProperty('--skin-glow', skin.bgGlow);
+
+  // Apply card backgrounds
+  const cf = document.querySelector('.card-front');
+  const cb = document.querySelector('.card-back');
+  if (cf) cf.style.background = skin.cardFrontBg;
+  if (cb) cb.style.background = skin.cardBackBg;
+
+  // Apply confetti colors for this skin
+  window._skinConfetti = skin.confetti;
+
+  // Apply extra CSS
+  if (extraStyleEl) extraStyleEl.remove();
+  if (skin.extraCSS) {
+    extraStyleEl = document.createElement('style');
+    extraStyleEl.textContent = skin.extraCSS;
+    document.head.appendChild(extraStyleEl);
+  }
+
+  // Update bg glow pseudo via a dynamic style
+  let glowStyle = document.getElementById('glow-style');
+  if (!glowStyle) { glowStyle = document.createElement('style'); glowStyle.id = 'glow-style'; document.head.appendChild(glowStyle); }
+  glowStyle.textContent = `body::before { background: ${skin.bgGlow} !important; }`;
+
+  buildSkinBar();
+}
+
+// Patch confetti to use skin colors
+const _origSpawnConfetti = spawnConfetti;
+function spawnConfetti() {
+  const colors = window._skinConfetti || ['#ff2d78','#c800ff','#ff80b0','#fff','#ff006e'];
+  for (let i = 0; i < 12; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `left:${30 + Math.random()*40}%;top:40%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.3}s;animation-duration:${0.6 + Math.random()*0.4}s;`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 1000);
+  }
+}
+
+buildSkinBar();
+applySkin(0);
+
+// Init
+buildCats();
+setMode('flash');
+renderFlash();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('ChemKvíz SW registered'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
+</body>
+</html>
