@@ -313,6 +313,29 @@
     opacity: 0.9;
   }
 
+  .element-latin {
+    font-size: 14px;
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+    text-align: center;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    opacity: 0.85;
+  }
+
+  .cat-btn.skolni {
+    border-color: var(--accent);
+    border-style: dashed;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .cat-btn.skolni.active {
+    background: var(--accent);
+    color: #fff;
+    border-style: solid;
+  }
+
   .flip-hint {
     font-size: 11px;
     color: var(--muted);
@@ -605,12 +628,6 @@
     <h1>Prvky <span>&</span> Značky</h1>
   </header>
 
-  <!-- Skin switcher -->
-  <div class="skin-wrap">
-    <div class="skin-wrap-label">Skin</div>
-    <div class="skin-bar" id="skin-bar"></div>
-  </div>
-
   <!-- Mode tabs -->
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="setMode('flash')">📚 Flashkarty</button>
@@ -623,7 +640,7 @@
   </div>
 
   <!-- Stats -->
-  <div class="stats">
+  <div class="stats" id="stats-bar">
     <div class="stat">
       <div class="stat-val" id="stat-total">118</div>
       <div class="stat-label">Prvků</div>
@@ -652,6 +669,7 @@
         </div>
         <div class="card-face card-back">
           <div class="element-name" id="fc-name"></div>
+          <div class="element-latin" id="fc-latin"></div>
           <div class="element-detail" id="fc-detail"></div>
           <div class="element-funfact" id="fc-funfact"></div>
         </div>
@@ -684,133 +702,141 @@
     <div class="feedback"><div class="feedback-text" id="feedback"></div></div>
     <button class="btn-next-quiz" id="btn-next-quiz" onclick="nextQuiz()">Další otázka →</button>
   </div>
-<div style="text-align:center;margin-top:40px;font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;opacity:0.6;">Made with ❤️ by your mum and dad.</div>
+  <!-- Skin switcher -->
+  <div class="skin-wrap" style="margin-top:32px;">
+    <div class="skin-wrap-label">Skin</div>
+    <div class="skin-bar" id="skin-bar"></div>
+  </div>
+
+<div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;opacity:0.6;">Made with ❤️ by your mum and dad.</div>
 
 </div>
 
 <div class="streak" id="streak-badge"></div>
 
 <script>
+const SKOLNI = new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,33,34,35,36,37,38,50,51,52,53,54,55,56,82,83,84,85,86,87,88]);
+
 const ELEMENTS = [
-  {z:1, sym:"H", name:"Vodík", cat:"Nekovy", fun:"Tvoří 75 % veškeré hmoty ve vesmíru. Celý vesmír je v podstatě vodík."},
-  {z:2, sym:"He", name:"Helium", cat:"Vzácné plyny", fun:"Je tak lehké, že helium unikající ze Země do vesmíru se už nikdy nevrátí."},
-  {z:3, sym:"Li", name:"Lithium", cat:"Alkalické kovy", fun:"Používá se v bateriích tvého telefonu. Také v lécích na bipolární poruchu."},
-  {z:4, sym:"Be", name:"Beryllium", cat:"Kovy alk. zemin", fun:"Extrémně toxické — jeho prach způsobuje nevyléčitelnou nemoc plic."},
-  {z:5, sym:"B", name:"Bor", cat:"Polokovy", fun:"Borax, sloučenina boru, se používal k mumifikaci ve starém Egyptě."},
-  {z:6, sym:"C", name:"Uhlík", cat:"Nekovy", fun:"Diamant i tužka jsou čistý uhlík — jen jinak uspořádaný."},
-  {z:7, sym:"N", name:"Dusík", cat:"Nekovy", fun:"Tvoří 78 % vzduchu kolem tebe. Dýcháš ho teď, ale vůbec ho nepotřebuješ."},
-  {z:8, sym:"O", name:"Kyslík", cat:"Nekovy", fun:"Kapalný kyslík je světle modrý a silně magnetický."},
-  {z:9, sym:"F", name:"Fluor", cat:"Halogeny", fun:"Nejreaktivnější prvek na světě. Reaguje i s většinou vzácných plynů."},
-  {z:10, sym:"Ne", name:"Neon", cat:"Vzácné plyny", fun:"Neonové reklamy dnes většinou neon neobsahují — používají se jiné plyny."},
-  {z:11, sym:"Na", name:"Sodík", cat:"Alkalické kovy", fun:"Čistý sodík exploduje při kontaktu s vodou. Sůl ho ale zkrotí."},
-  {z:12, sym:"Mg", name:"Hořčík", cat:"Kovy alk. zemin", fun:"Hoří tak jasně a horce, že ho nelze uhasit vodou — ta ho ještě rozhoří."},
-  {z:13, sym:"Al", name:"Hliník", cat:"Ostatní kovy", fun:"Do roku 1886 byl dražší než zlato. Špička Washingtonova obelisku je z hliníku."},
-  {z:14, sym:"Si", name:"Křemík", cat:"Polokovy", fun:"Celý moderní svět stojí na křemíku — každý čip, procesor, telefon."},
-  {z:15, sym:"P", name:"Fosfor", cat:"Nekovy", fun:"Bílý fosfor svítí ve tmě a byl použit jako zápalná zbraň ve válkách."},
-  {z:16, sym:"S", name:"Síra", cat:"Nekovy", fun:"Ve středověku věřili, že čichání síry odežene ďábla. Zápalem sirných par."},
-  {z:17, sym:"Cl", name:"Chlor", cat:"Halogeny", fun:"Byl použit jako chemická zbraň v 1. světové válce. Žlutozelený jedovatý plyn."},
-  {z:18, sym:"Ar", name:"Argon", cat:"Vzácné plyny", fun:"Tvoří skoro 1 % vzduchu. Jméno pochází z řeckého 'argos' — líný, nečinný."},
-  {z:19, sym:"K", name:"Draslík", cat:"Alkalické kovy", fun:"Značka K pochází z latinského 'kalium'. Banány ho mají hodně, ale ne dost na otravu."},
-  {z:20, sym:"Ca", name:"Vápník", cat:"Kovy alk. zemin", fun:"Tvoje kosti jsou z 70 % vápník. Každých 10 let si celý skelet obnovíš."},
-  {z:21, sym:"Sc", name:"Skandium", cat:"Přechodné kovy", fun:"Tak vzácný, že do roku 1960 bylo na světě pouze 2 kg čistého skandia."},
-  {z:22, sym:"Ti", name:"Titan", cat:"Přechodné kovy", fun:"Biokompatibilní — tělo ho neodmítá, proto se z něj dělají klouby a implantáty."},
-  {z:23, sym:"V", name:"Vanad", cat:"Přechodné kovy", fun:"Pojmenován po Vanadis — severské bohyni krásy. Přidává pevnost do oceli."},
-  {z:24, sym:"Cr", name:"Chrom", cat:"Přechodné kovy", fun:"Rubíny jsou červené díky chrómu. Smaragdy jsou zelené také díky chrómu."},
-  {z:25, sym:"Mn", name:"Mangan", cat:"Přechodné kovy", fun:"Pravěcí lidé používali oxid manganu jako černou barvu do jeskynních maleb."},
-  {z:26, sym:"Fe", name:"Železo", cat:"Přechodné kovy", fun:"Jádro Země je pevná železo-niklová koule velká jako Měsíc."},
-  {z:27, sym:"Co", name:"Kobalt", cat:"Přechodné kovy", fun:"Název pochází od německých 'Kobold' — skřítků, kteří prý hatili práci horníků."},
-  {z:28, sym:"Ni", name:"Nikl", cat:"Přechodné kovy", fun:"Americká 5centová mince se jmenuje 'nickel', ale obsahuje jen 25 % niklu."},
-  {z:29, sym:"Cu", name:"Měď", cat:"Přechodné kovy", fun:"Nejstarší kov, který lidé používali — první artefakty jsou staré přes 10 000 let."},
-  {z:30, sym:"Zn", name:"Zinek", cat:"Přechodné kovy", fun:"Pokrývá ocelové konstrukce proti rzi. Galvanizace — neviditelný, ale důležitý."},
-  {z:31, sym:"Ga", name:"Gallium", cat:"Ostatní kovy", fun:"Taje v dlani při tělesné teplotě. Lze ho nalít do formy a mít 'rtuťový' předmět."},
-  {z:32, sym:"Ge", name:"Germanium", cat:"Polokovy", fun:"Předpověděl jeho existenci Mendelejev dříve, než byl objeven — pojmenoval ho 'eka-křemík'."},
-  {z:33, sym:"As", name:"Arsen", cat:"Polokovy", fun:"Oblíbený jed viktoriánské éry. Říkalo se mu 'dědičný prach' — zákeřný, bez chuti."},
-  {z:34, sym:"Se", name:"Selen", cat:"Nekovy", fun:"Název pochází od Selene — řecké bohyně Měsíce. Nutný pro funkci štítné žlázy."},
-  {z:35, sym:"Br", name:"Brom", cat:"Halogeny", fun:"Jeden ze dvou prvků, které jsou kapalné při pokojové teplotě. (Druhý je rtuť.)"},
-  {z:36, sym:"Kr", name:"Krypton", cat:"Vzácné plyny", fun:"Superman má alergii na Kryptonit — což je fiktivní, ale jméno je od tohoto prvku."},
-  {z:37, sym:"Rb", name:"Rubidium", cat:"Alkalické kovy", fun:"Tak reaktivní, že se musí uchovávat v miniaturních skleněných ampulích zapečetěných voskem."},
-  {z:38, sym:"Sr", name:"Stroncium", cat:"Kovy alk. zemin", fun:"Dává červenou barvu ohňostrojům. Radioaktivní stroncium-90 je produktem jaderných výbuchů."},
-  {z:39, sym:"Y", name:"Yttrium", cat:"Přechodné kovy", fun:"Pojmenováno po vesnici Ytterby ve Švédsku, odkud pochází i Erbium, Terbium a Ytterbium."},
-  {z:40, sym:"Zr", name:"Zirkonium", cat:"Přechodné kovy", fun:"Kubický zirkon — levná náhražka diamantů — je oxidem zirkonia."},
-  {z:41, sym:"Nb", name:"Niob", cat:"Přechodné kovy", fun:"Pojmenován po Niobé z řecké mytologie — dceři Tantala, která věčně plakala."},
-  {z:42, sym:"Mo", name:"Molybden", cat:"Přechodné kovy", fun:"Bez molybdenu by baktérie nedokázaly vázat dusík — a život by vypadal úplně jinak."},
-  {z:43, sym:"Tc", name:"Technecium", cat:"Přechodné kovy", fun:"První prvek vyrobený uměle v laboratoři. V přírodě prakticky neexistuje."},
-  {z:44, sym:"Ru", name:"Ruthenium", cat:"Přechodné kovy", fun:"Pojmenováno po Rusi (Ruthenia). Jeden z nejtvrdších platinových kovů."},
-  {z:45, sym:"Rh", name:"Rhodium", cat:"Přechodné kovy", fun:"Nejdražší kov na světě — kilogram stojí více než kilogram zlata osmkrát."},
-  {z:46, sym:"Pd", name:"Palladium", cat:"Přechodné kovy", fun:"Pojmenováno po asteroidu Pallas, který byl objeven krátce předtím."},
-  {z:47, sym:"Ag", name:"Stříbro", cat:"Přechodné kovy", fun:"Nejlepší elektrický vodič ze všech kovů. A také přirozený antibakteriální materiál."},
-  {z:48, sym:"Cd", name:"Kadmium", cat:"Přechodné kovy", fun:"Silně toxické. Baterie s kadmiem jsou zakázány v EU pro běžné použití."},
-  {z:49, sym:"In", name:"Indium", cat:"Ostatní kovy", fun:"Tvoří dotykové displeje — indium-cín oxid pokrývá každý smartphone na světě."},
-  {z:50, sym:"Sn", name:"Cín", cat:"Ostatní kovy", fun:"Při ohýbání cínové tyče slyšíte praskání zvané 'cínový křik' — krystaly se lámou."},
-  {z:51, sym:"Sb", name:"Antimon", cat:"Polokovy", fun:"Starověké Egypťanky používaly sulfid antimonu jako černé oční stíny — kohl."},
-  {z:52, sym:"Te", name:"Tellur", cat:"Polokovy", fun:"Pojmenováno po Tellus — latinském jménu Země. Extrémně vzácný prvek v zemské kůře."},
-  {z:53, sym:"I", name:"Jód", cat:"Halogeny", fun:"Fialové páry jódu — jedné z mála pevných látek, která přímo sublimuje bez tání."},
-  {z:54, sym:"Xe", name:"Xenon", cat:"Vzácné plyny", fun:"Xenonové výbojky svítí téměř jako sluneční světlo. Používají se jako anestetikum."},
-  {z:55, sym:"Cs", name:"Cesium", cat:"Alkalické kovy", fun:"Atomové hodiny cesiem jsou přesné na 1 sekundu za 300 milionů let."},
-  {z:56, sym:"Ba", name:"Barium", cat:"Kovy alk. zemin", fun:"Síran barnatý se pije před RTG vyšetřením — je nerozpustný a záření nepropustí."},
-  {z:57, sym:"La", name:"Lanthan", cat:"Lanthanoidy", fun:"Dává čočkám fotoaparátů výjimečné optické vlastnosti — ostrost a jasnost."},
-  {z:58, sym:"Ce", name:"Cer", cat:"Lanthanoidy", fun:"Pojmenováno po trpasličí planetě Ceres. Je ho v zemské kůře více než mědi."},
-  {z:59, sym:"Pr", name:"Praseodym", cat:"Lanthanoidy", fun:"Zelené sváteční sklo v kostelích — barvu mu dodává praseodym."},
-  {z:60, sym:"Nd", name:"Neodym", cat:"Lanthanoidy", fun:"Neodymové magnety jsou nejsilnější permanentní magnety na světě. Malé, ale děsivé."},
-  {z:61, sym:"Pm", name:"Prometium", cat:"Lanthanoidy", fun:"Pojmenováno po Prométheovi. Radioaktivní, v přírodě téměř neexistuje."},
-  {z:62, sym:"Sm", name:"Samarium", cat:"Lanthanoidy", fun:"Pojmenováno po ruském mineralogovi Samarském — první prvek pojmenovaný po živém člověku."},
-  {z:63, sym:"Eu", name:"Europium", cat:"Lanthanoidy", fun:"Chrání eurobankovky před padělky — fluoreskuje červeně pod UV světlem."},
-  {z:64, sym:"Gd", name:"Gadolinium", cat:"Lanthanoidy", fun:"Používá se jako kontrastní látka při MRI vyšetřeních mozku a páteře."},
-  {z:65, sym:"Tb", name:"Terbium", cat:"Lanthanoidy", fun:"Pojmenováno po vesnici Ytterby — stejně jako Yttrium, Erbium a Ytterbium."},
-  {z:66, sym:"Dy", name:"Dysprosium", cat:"Lanthanoidy", fun:"Název z řečtiny: 'dysprositos' — těžko dostupný. Byl těžko izolován."},
-  {z:67, sym:"Ho", name:"Holmium", cat:"Lanthanoidy", fun:"Má nejsilnější magnetický moment ze všech prvků. Pojmenováno po Stockholmu."},
-  {z:68, sym:"Er", name:"Erbium", cat:"Lanthanoidy", fun:"Dává růžovou barvu sklu. Používá se v lékařských laserech pro kůži."},
-  {z:69, sym:"Tm", name:"Thulium", cat:"Lanthanoidy", fun:"Pojmenováno po Thule — mytické zemi na konci světa. Jeden z nejdražších lanthanoidů."},
-  {z:70, sym:"Yb", name:"Ytterbium", cat:"Lanthanoidy", fun:"Čtvrté ze čtyř prvků pojmenovaných po vesnici Ytterby. Ta vesnice je slavná."},
-  {z:71, sym:"Lu", name:"Lutecium", cat:"Lanthanoidy", fun:"Pojmenováno po Lutetia — latinském názvu Paříže. Nejtěžší a nejdražší lanthanoid."},
-  {z:72, sym:"Hf", name:"Hafnium", cat:"Přechodné kovy", fun:"Pojmenováno po Hafnia — latinském názvu Kodaně. Skoro vždy doprovází zirkonium."},
-  {z:73, sym:"Ta", name:"Tantal", cat:"Přechodné kovy", fun:"Pojmenováno po Tantalovi z řecké mytologie — kvůli frustraci při jeho izolaci."},
-  {z:74, sym:"W", name:"Wolfram", cat:"Přechodné kovy", fun:"Nejvyšší bod tání ze všech prvků — 3422 °C. Proto se z něj dělají žárovky."},
-  {z:75, sym:"Re", name:"Rhenium", cat:"Přechodné kovy", fun:"Jeden z posledních stabilních prvků, které byly objeveny — až v roce 1925."},
-  {z:76, sym:"Os", name:"Osmium", cat:"Přechodné kovy", fun:"Nejtěžší přírodní prvek na světě — hustší než olovo téměř dvakrát."},
-  {z:77, sym:"Ir", name:"Iridium", cat:"Přechodné kovy", fun:"Vrstva iridia v geologických vrstvách dokazuje dopad meteoritu, který zahubil dinosaury."},
-  {z:78, sym:"Pt", name:"Platina", cat:"Přechodné kovy", fun:"Katalyzátory v autech jsou z platiny — bez ní by výfuky byly mnohem toxičtější."},
-  {z:79, sym:"Au", name:"Zlato", cat:"Přechodné kovy", fun:"Veškeré zlato na Zemi pochází z kolize neutronových hvězd před miliardami let."},
-  {z:80, sym:"Hg", name:"Rtuť", cat:"Přechodné kovy", fun:"Jediný kov kapalný při pokojové teplotě. Starověcí alchymisté ji považovali za základ všech kovů."},
-  {z:81, sym:"Tl", name:"Thallium", cat:"Ostatní kovy", fun:"Oblíbený jed detektivních románů — bez chuti, bez zápachu, příznaky jako chřipka."},
-  {z:82, sym:"Pb", name:"Olovo", cat:"Ostatní kovy", fun:"Římané sladili víno olovnatými nádobami. Někteří historici to dávají za příčinu úpadku říše."},
-  {z:83, sym:"Bi", name:"Bismut", cat:"Ostatní kovy", fun:"Krystaly bizmutu vypadají jako sci-fi architektury — duhové kubické schody."},
-  {z:84, sym:"Po", name:"Polonium", cat:"Polokovy", fun:"Marie Curie ho pojmenovala po své vlasti Polsku. Je extrémně radioaktivní."},
-  {z:85, sym:"At", name:"Astat", cat:"Halogeny", fun:"Nejradioaktivnější přirozený prvek. V celé zemské kůře ho je méně než 30 gramů."},
-  {z:86, sym:"Rn", name:"Radon", cat:"Vzácné plyny", fun:"Radioaktivní plyn pronikající ze země do sklepů — druhá nejčastější příčina rakoviny plic."},
-  {z:87, sym:"Fr", name:"Francium", cat:"Alkalické kovy", fun:"Nejtěžší přirozený alkalický kov. V celé zemské kůře ho existuje méně než 30 gramů."},
-  {z:88, sym:"Ra", name:"Radium", cat:"Kovy alk. zemin", fun:"Ve 20. letech se přidávalo do hodinek — dělaly číselník svítící ve tmě. Způsobovalo rakovinu."},
-  {z:89, sym:"Ac", name:"Aktinium", cat:"Aktinoidy", fun:"Svítí modře ve tmě díky radioaktivnímu záření ionizujícímu vzduch kolem sebe."},
-  {z:90, sym:"Th", name:"Thorium", cat:"Aktinoidy", fun:"Pojmenováno po Thorovi — bohu hromu. Mohlo by pohánět jaderné reaktory bezpečněji než uran."},
-  {z:91, sym:"Pa", name:"Protaktinium", cat:"Aktinoidy", fun:"Jeden z nejnebezpečnějších prvků — radioaktivní a extrémně toxický. Nemá žádné využití."},
-  {z:92, sym:"U", name:"Uran", cat:"Aktinoidy", fun:"Pojmenováno po planetě Uran. Objev radioaktivity uranem změnil celou fyziku."},
-  {z:93, sym:"Np", name:"Neptunium", cat:"Aktinoidy", fun:"Pojmenováno po Neptunu — stejně jako Neptun je za Uranem, neptunium je za uranem v tabulce."},
-  {z:94, sym:"Pu", name:"Plutonium", cat:"Aktinoidy", fun:"Pojmenováno po Plutovi. Méně než 6 kg plutonia stačí k sestrojení atomové bomby."},
-  {z:95, sym:"Am", name:"Americium", cat:"Aktinoidy", fun:"Je v každém detektoru kouře ve tvém domě. Ionizuje vzduch a detekuje kouř."},
-  {z:96, sym:"Cm", name:"Curium", cat:"Aktinoidy", fun:"Pojmenováno po Marii a Pierrovi Curiovým — jedináček mezi prvky pojmenovanými po páru."},
-  {z:97, sym:"Bk", name:"Berkelium", cat:"Aktinoidy", fun:"Pojmenováno po Berkeley v Kalifornii. Syntetizováno poprvé v roce 1949."},
-  {z:98, sym:"Cf", name:"Californium", cat:"Aktinoidy", fun:"Nejdražší prodávaná látka na světě — miligram stojí 27 milionů dolarů."},
-  {z:99, sym:"Es", name:"Einsteinium", cat:"Aktinoidy", fun:"Bylo tajně objeveno v troskách první vodíkové bomby. Pojmenováno po Einsteinovi."},
-  {z:100, sym:"Fm", name:"Fermium", cat:"Aktinoidy", fun:"Také objeveno v troskách bomby. Pojmenováno po Enricu Fermim, otci jaderného reaktoru."},
-  {z:101, sym:"Md", name:"Mendelevium", cat:"Aktinoidy", fun:"Pojmenováno po Mendělejevovi — tvůrci periodické tabulky, která ho samozřejmě obsahuje."},
-  {z:102, sym:"No", name:"Nobelium", cat:"Aktinoidy", fun:"Pojmenováno po Alfredu Nobelovi. Má poločas rozpadu pouhé 58 minut."},
-  {z:103, sym:"Lr", name:"Lawrencium", cat:"Aktinoidy", fun:"Pojmenováno po Ernstu Lawrencovi, vynálezci cyklotronu — stroje na výrobu těžkých prvků."},
-  {z:104, sym:"Rf", name:"Rutherfordium", cat:"Přechodné kovy", fun:"Pojmenováno po Ernestu Rutherfordovi, který objevil atomové jádro. Trvá jen sekundy."},
-  {z:105, sym:"Db", name:"Dubnium", cat:"Přechodné kovy", fun:"Pojmenováno po Dubně v Rusku — kde bylo souběžně syntetizováno s americkým týmem."},
-  {z:106, sym:"Sg", name:"Seaborgium", cat:"Přechodné kovy", fun:"Glenn Seaborg byl prvním živým člověkem, po němž byl prvek pojmenován za jeho života."},
-  {z:107, sym:"Bh", name:"Bohrium", cat:"Přechodné kovy", fun:"Pojmenováno po Nielsi Bohrovi — dánském fyzikovi, který popsal model atomu."},
-  {z:108, sym:"Hs", name:"Hassium", cat:"Přechodné kovy", fun:"Pojmenováno po Hassia — latinském názvu německé spolkové země Hesensko."},
-  {z:109, sym:"Mt", name:"Meitnerium", cat:"Přechodné kovy", fun:"Pojmenováno po Lise Meitnerové — fyzičce, která vysvětlila jaderné štěpení, ale Nobel nedostala."},
-  {z:110, sym:"Ds", name:"Darmstadtium", cat:"Přechodné kovy", fun:"Pojmenováno po Darmstadtu v Německu, kde bylo syntetizováno. Vydrží jen mikrosekundy."},
-  {z:111, sym:"Rg", name:"Roentgenium", cat:"Přechodné kovy", fun:"Pojmenováno po Wilhelmu Röntgenovi — objeviteli rentgenového záření."},
-  {z:112, sym:"Cn", name:"Copernicium", cat:"Přechodné kovy", fun:"Pojmenováno po Mikuláši Koperníkovi — astronomovi, který ukázal, že Země obíhá Slunce."},
-  {z:113, sym:"Nh", name:"Nihonium", cat:"Ostatní kovy", fun:"První prvek syntetizovaný v Asii — v Japonsku. 'Nihon' znamená japonsky Japonsko."},
-  {z:114, sym:"Fl", name:"Flerovium", cat:"Ostatní kovy", fun:"Pojmenováno po Flerovově laboratoři v Dubně. Existuje jen zlomky sekundy."},
-  {z:115, sym:"Mc", name:"Moscovium", cat:"Ostatní kovy", fun:"Pojmenováno po Moskevské oblasti. Syntetizováno v roce 2003, uznáno až v roce 2016."},
-  {z:116, sym:"Lv", name:"Livermorium", cat:"Ostatní kovy", fun:"Pojmenováno po Livermore v Kalifornii — centru amerického jaderného výzkumu."},
-  {z:117, sym:"Ts", name:"Tennessine", cat:"Halogeny", fun:"Pojmenováno po Tennessee — státu, kde sídlí Oak Ridge National Laboratory."},
-  {z:118, sym:"Og", name:"Oganesson", cat:"Vzácné plyny", fun:"Nejtěžší dosud syntetizovaný prvek. Pojmenováno po fyzikovi Jurim Oganesjanovi."},
-];
+  {z:1, sym:"H", name:"Vodík", lat:"Hydrogenium", cat:"Nekovy", fun:"Tvoří 75 % veškeré hmoty ve vesmíru. Celý vesmír je v podstatě vodík."},
+  {z:2, sym:"He", name:"Helium", lat:"Helium", cat:"Vzácné plyny", fun:"Je tak lehké, že helium unikající ze Země do vesmíru se už nikdy nevrátí."},
+  {z:3, sym:"Li", name:"Lithium", lat:"Lithium", cat:"Alkalické kovy", fun:"Používá se v bateriích tvého telefonu. Také v lécích na bipolární poruchu."},
+  {z:4, sym:"Be", name:"Beryllium", lat:"Beryllium", cat:"Kovy alk. zemin", fun:"Extrémně toxické — jeho prach způsobuje nevyléčitelnou nemoc plic."},
+  {z:5, sym:"B", name:"Bor", lat:"Borum", cat:"Polokovy", fun:"Borax, sloučenina boru, se používal k mumifikaci ve starém Egyptě."},
+  {z:6, sym:"C", name:"Uhlík", lat:"Carboneum", cat:"Nekovy", fun:"Diamant i tužka jsou čistý uhlík — jen jinak uspořádaný."},
+  {z:7, sym:"N", name:"Dusík", lat:"Nitrogenium", cat:"Nekovy", fun:"Tvoří 78 % vzduchu kolem tebe. Dýcháš ho teď, ale vůbec ho nepotřebuješ."},
+  {z:8, sym:"O", name:"Kyslík", lat:"Oxygenium", cat:"Nekovy", fun:"Kapalný kyslík je světle modrý a silně magnetický."},
+  {z:9, sym:"F", name:"Fluor", lat:"Fluorum", cat:"Halogeny", fun:"Nejreaktivnější prvek na světě. Reaguje i s většinou vzácných plynů."},
+  {z:10, sym:"Ne", name:"Neon", lat:"Neon", cat:"Vzácné plyny", fun:"Neonové reklamy dnes většinou neon neobsahují — používají se jiné plyny."},
+  {z:11, sym:"Na", name:"Sodík", lat:"Natrium", cat:"Alkalické kovy", fun:"Čistý sodík exploduje při kontaktu s vodou. Sůl ho ale zkrotí."},
+  {z:12, sym:"Mg", name:"Hořčík", lat:"Magnesium", cat:"Kovy alk. zemin", fun:"Hoří tak jasně a horce, že ho nelze uhasit vodou — ta ho ještě rozhoří."},
+  {z:13, sym:"Al", name:"Hliník", lat:"Aluminium", cat:"Ostatní kovy", fun:"Do roku 1886 byl dražší než zlato. Špička Washingtonova obelisku je z hliníku."},
+  {z:14, sym:"Si", name:"Křemík", lat:"Silicium", cat:"Polokovy", fun:"Celý moderní svět stojí na křemíku — každý čip, procesor, telefon."},
+  {z:15, sym:"P", name:"Fosfor", lat:"Phosphorus", cat:"Nekovy", fun:"Bílý fosfor svítí ve tmě a byl použit jako zápalná zbraň ve válkách."},
+  {z:16, sym:"S", name:"Síra", lat:"Sulphur", cat:"Nekovy", fun:"Ve středověku věřili, že čichání síry odežene ďábla. Zápalem sirných par."},
+  {z:17, sym:"Cl", name:"Chlor", lat:"Chlorum", cat:"Halogeny", fun:"Byl použit jako chemická zbraň v 1. světové válce. Žlutozelený jedovatý plyn."},
+  {z:18, sym:"Ar", name:"Argon", lat:"Argon", cat:"Vzácné plyny", fun:"Tvoří skoro 1 % vzduchu. Jméno pochází z řeckého 'argos' — líný, nečinný."},
+  {z:19, sym:"K", name:"Draslík", lat:"Kalium", cat:"Alkalické kovy", fun:"Značka K pochází z latinského 'kalium'. Banány ho mají hodně, ale ne dost na otravu."},
+  {z:20, sym:"Ca", name:"Vápník", lat:"Calcium", cat:"Kovy alk. zemin", fun:"Tvoje kosti jsou z 70 % vápník. Každých 10 let si celý skelet obnovíš."},
+  {z:21, sym:"Sc", name:"Skandium", lat:"Scandium", cat:"Přechodné kovy", fun:"Tak vzácný, že do roku 1960 bylo na světě pouze 2 kg čistého skandia."},
+  {z:22, sym:"Ti", name:"Titan", lat:"Titanium", cat:"Přechodné kovy", fun:"Biokompatibilní — tělo ho neodmítá, proto se z něj dělají klouby a implantáty."},
+  {z:23, sym:"V", name:"Vanad", lat:"Vanadium", cat:"Přechodné kovy", fun:"Pojmenován po Vanadis — severské bohyni krásy. Přidává pevnost do oceli."},
+  {z:24, sym:"Cr", name:"Chrom", lat:"Chromium", cat:"Přechodné kovy", fun:"Rubíny jsou červené díky chrómu. Smaragdy jsou zelené také díky chrómu."},
+  {z:25, sym:"Mn", name:"Mangan", lat:"Manganum", cat:"Přechodné kovy", fun:"Pravěcí lidé používali oxid manganu jako černou barvu do jeskynních maleb."},
+  {z:26, sym:"Fe", name:"Železo", lat:"Ferrum", cat:"Přechodné kovy", fun:"Jádro Země je pevná železo-niklová koule velká jako Měsíc."},
+  {z:27, sym:"Co", name:"Kobalt", lat:"Cobaltum", cat:"Přechodné kovy", fun:"Název pochází od německých 'Kobold' — skřítků, kteří prý hatili práci horníků."},
+  {z:28, sym:"Ni", name:"Nikl", lat:"Niccolum", cat:"Přechodné kovy", fun:"Americká 5centová mince se jmenuje 'nickel', ale obsahuje jen 25 % niklu."},
+  {z:29, sym:"Cu", name:"Měď", lat:"Cuprum", cat:"Přechodné kovy", fun:"Nejstarší kov, který lidé používali — první artefakty jsou staré přes 10 000 let."},
+  {z:30, sym:"Zn", name:"Zinek", lat:"Zincum", cat:"Přechodné kovy", fun:"Pokrývá ocelové konstrukce proti rzi. Galvanizace — neviditelný, ale důležitý."},
+  {z:31, sym:"Ga", name:"Gallium", lat:"Gallium", cat:"Ostatní kovy", fun:"Taje v dlani při tělesné teplotě. Lze ho nalít do formy a mít 'rtuťový' předmět."},
+  {z:32, sym:"Ge", name:"Germanium", lat:"Germanium", cat:"Polokovy", fun:"Předpověděl jeho existenci Mendelejev dříve, než byl objeven — pojmenoval ho 'eka-křemík'."},
+  {z:33, sym:"As", name:"Arsen", lat:"Arsenicum", cat:"Polokovy", fun:"Oblíbený jed viktoriánské éry. Říkalo se mu 'dědičný prach' — zákeřný, bez chuti."},
+  {z:34, sym:"Se", name:"Selen", lat:"Selenium", cat:"Nekovy", fun:"Název pochází od Selene — řecké bohyně Měsíce. Nutný pro funkci štítné žlázy."},
+  {z:35, sym:"Br", name:"Brom", lat:"Bromum", cat:"Halogeny", fun:"Jeden ze dvou prvků, které jsou kapalné při pokojové teplotě. (Druhý je rtuť.)"},
+  {z:36, sym:"Kr", name:"Krypton", lat:"Krypton", cat:"Vzácné plyny", fun:"Superman má alergii na Kryptonit — což je fiktivní, ale jméno je od tohoto prvku."},
+  {z:37, sym:"Rb", name:"Rubidium", lat:"Rubidium", cat:"Alkalické kovy", fun:"Tak reaktivní, že se musí uchovávat v miniaturních skleněných ampulích zapečetěných voskem."},
+  {z:38, sym:"Sr", name:"Stroncium", lat:"Strontium", cat:"Kovy alk. zemin", fun:"Dává červenou barvu ohňostrojům. Radioaktivní stroncium-90 je produktem jaderných výbuchů."},
+  {z:39, sym:"Y", name:"Yttrium", lat:"Yttrium", cat:"Přechodné kovy", fun:"Pojmenováno po vesnici Ytterby ve Švédsku, odkud pochází i Erbium, Terbium a Ytterbium."},
+  {z:40, sym:"Zr", name:"Zirkonium", lat:"Zirconium", cat:"Přechodné kovy", fun:"Kubický zirkon — levná náhražka diamantů — je oxidem zirkonia."},
+  {z:41, sym:"Nb", name:"Niob", lat:"Niobium", cat:"Přechodné kovy", fun:"Pojmenován po Niobé z řecké mytologie — dceři Tantala, která věčně plakala."},
+  {z:42, sym:"Mo", name:"Molybden", lat:"Molybdaenum", cat:"Přechodné kovy", fun:"Bez molybdenu by baktérie nedokázaly vázat dusík — a život by vypadal úplně jinak."},
+  {z:43, sym:"Tc", name:"Technecium", lat:"Technetium", cat:"Přechodné kovy", fun:"První prvek vyrobený uměle v laboratoři. V přírodě prakticky neexistuje."},
+  {z:44, sym:"Ru", name:"Ruthenium", lat:"Ruthenium", cat:"Přechodné kovy", fun:"Pojmenováno po Rusi (Ruthenia). Jeden z nejtvrdších platinových kovů."},
+  {z:45, sym:"Rh", name:"Rhodium", lat:"Rhodium", cat:"Přechodné kovy", fun:"Nejdražší kov na světě — kilogram stojí více než kilogram zlata osmkrát."},
+  {z:46, sym:"Pd", name:"Palladium", lat:"Palladium", cat:"Přechodné kovy", fun:"Pojmenováno po asteroidu Pallas, který byl objeven krátce předtím."},
+  {z:47, sym:"Ag", name:"Stříbro", lat:"Argentum", cat:"Přechodné kovy", fun:"Nejlepší elektrický vodič ze všech kovů. A také přirozený antibakteriální materiál."},
+  {z:48, sym:"Cd", name:"Kadmium", lat:"Cadmium", cat:"Přechodné kovy", fun:"Silně toxické. Baterie s kadmiem jsou zakázány v EU pro běžné použití."},
+  {z:49, sym:"In", name:"Indium", lat:"Indium", cat:"Ostatní kovy", fun:"Tvoří dotykové displeje — indium-cín oxid pokrývá každý smartphone na světě."},
+  {z:50, sym:"Sn", name:"Cín", lat:"Stannum", cat:"Ostatní kovy", fun:"Při ohýbání cínové tyče slyšíte praskání zvané 'cínový křik' — krystaly se lámou."},
+  {z:51, sym:"Sb", name:"Antimon", lat:"Stibium", cat:"Polokovy", fun:"Starověké Egypťanky používaly sulfid antimonu jako černé oční stíny — kohl."},
+  {z:52, sym:"Te", name:"Tellur", lat:"Tellurium", cat:"Polokovy", fun:"Pojmenováno po Tellus — latinském jménu Země. Extrémně vzácný prvek v zemské kůře."},
+  {z:53, sym:"I", name:"Jód", lat:"Iodium", cat:"Halogeny", fun:"Fialové páry jódu — jedné z mála pevných látek, která přímo sublimuje bez tání."},
+  {z:54, sym:"Xe", name:"Xenon", lat:"Xenon", cat:"Vzácné plyny", fun:"Xenonové výbojky svítí téměř jako sluneční světlo. Používají se jako anestetikum."},
+  {z:55, sym:"Cs", name:"Cesium", lat:"Caesium", cat:"Alkalické kovy", fun:"Atomové hodiny cesiem jsou přesné na 1 sekundu za 300 milionů let."},
+  {z:56, sym:"Ba", name:"Barium", lat:"Barium", cat:"Kovy alk. zemin", fun:"Síran barnatý se pije před RTG vyšetřením — je nerozpustný a záření nepropustí."},
+  {z:57, sym:"La", name:"Lanthan", lat:"Lanthanum", cat:"Lanthanoidy", fun:"Dává čočkám fotoaparátů výjimečné optické vlastnosti — ostrost a jasnost."},
+  {z:58, sym:"Ce", name:"Cer", lat:"Cerium", cat:"Lanthanoidy", fun:"Pojmenováno po trpasličí planetě Ceres. Je ho v zemské kůře více než mědi."},
+  {z:59, sym:"Pr", name:"Praseodym", lat:"Praseodymium", cat:"Lanthanoidy", fun:"Zelené sváteční sklo v kostelích — barvu mu dodává praseodym."},
+  {z:60, sym:"Nd", name:"Neodym", lat:"Neodymium", cat:"Lanthanoidy", fun:"Neodymové magnety jsou nejsilnější permanentní magnety na světě. Malé, ale děsivé."},
+  {z:61, sym:"Pm", name:"Prometium", lat:"Promethium", cat:"Lanthanoidy", fun:"Pojmenováno po Prométheovi. Radioaktivní, v přírodě téměř neexistuje."},
+  {z:62, sym:"Sm", name:"Samarium", lat:"Samarium", cat:"Lanthanoidy", fun:"Pojmenováno po ruském mineralogovi Samarském — první prvek pojmenovaný po živém člověku."},
+  {z:63, sym:"Eu", name:"Europium", lat:"Europium", cat:"Lanthanoidy", fun:"Chrání eurobankovky před padělky — fluoreskuje červeně pod UV světlem."},
+  {z:64, sym:"Gd", name:"Gadolinium", lat:"Gadolinium", cat:"Lanthanoidy", fun:"Používá se jako kontrastní látka při MRI vyšetřeních mozku a páteře."},
+  {z:65, sym:"Tb", name:"Terbium", lat:"Terbium", cat:"Lanthanoidy", fun:"Pojmenováno po vesnici Ytterby — stejně jako Yttrium, Erbium a Ytterbium."},
+  {z:66, sym:"Dy", name:"Dysprosium", lat:"Dysprosium", cat:"Lanthanoidy", fun:"Název z řečtiny: 'dysprositos' — těžko dostupný. Byl těžko izolován."},
+  {z:67, sym:"Ho", name:"Holmium", lat:"Holmium", cat:"Lanthanoidy", fun:"Má nejsilnější magnetický moment ze všech prvků. Pojmenováno po Stockholmu."},
+  {z:68, sym:"Er", name:"Erbium", lat:"Erbium", cat:"Lanthanoidy", fun:"Dává růžovou barvu sklu. Používá se v lékařských laserech pro kůži."},
+  {z:69, sym:"Tm", name:"Thulium", lat:"Thulium", cat:"Lanthanoidy", fun:"Pojmenováno po Thule — mytické zemi na konci světa. Jeden z nejdražších lanthanoidů."},
+  {z:70, sym:"Yb", name:"Ytterbium", lat:"Ytterbium", cat:"Lanthanoidy", fun:"Čtvrté ze čtyř prvků pojmenovaných po vesnici Ytterby. Ta vesnice je slavná."},
+  {z:71, sym:"Lu", name:"Lutecium", lat:"Lutetium", cat:"Lanthanoidy", fun:"Pojmenováno po Lutetia — latinském názvu Paříže. Nejtěžší a nejdražší lanthanoid."},
+  {z:72, sym:"Hf", name:"Hafnium", lat:"Hafnium", cat:"Přechodné kovy", fun:"Pojmenováno po Hafnia — latinském názvu Kodaně. Skoro vždy doprovází zirkonium."},
+  {z:73, sym:"Ta", name:"Tantal", lat:"Tantalum", cat:"Přechodné kovy", fun:"Pojmenováno po Tantalovi z řecké mytologie — kvůli frustraci při jeho izolaci."},
+  {z:74, sym:"W", name:"Wolfram", lat:"Wolframium", cat:"Přechodné kovy", fun:"Nejvyšší bod tání ze všech prvků — 3422 °C. Proto se z něj dělají žárovky."},
+  {z:75, sym:"Re", name:"Rhenium", lat:"Rhenium", cat:"Přechodné kovy", fun:"Jeden z posledních stabilních prvků, které byly objeveny — až v roce 1925."},
+  {z:76, sym:"Os", name:"Osmium", lat:"Osmium", cat:"Přechodné kovy", fun:"Nejtěžší přírodní prvek na světě — hustší než olovo téměř dvakrát."},
+  {z:77, sym:"Ir", name:"Iridium", lat:"Iridium", cat:"Přechodné kovy", fun:"Vrstva iridia v geologických vrstvách dokazuje dopad meteoritu, který zahubil dinosaury."},
+  {z:78, sym:"Pt", name:"Platina", lat:"Platinum", cat:"Přechodné kovy", fun:"Katalyzátory v autech jsou z platiny — bez ní by výfuky byly mnohem toxičtější."},
+  {z:79, sym:"Au", name:"Zlato", lat:"Aurum", cat:"Přechodné kovy", fun:"Veškeré zlato na Zemi pochází z kolize neutronových hvězd před miliardami let."},
+  {z:80, sym:"Hg", name:"Rtuť", lat:"Hydrargyrum", cat:"Přechodné kovy", fun:"Jediný kov kapalný při pokojové teplotě. Starověcí alchymisté ji považovali za základ všech kovů."},
+  {z:81, sym:"Tl", name:"Thallium", lat:"Thallium", cat:"Ostatní kovy", fun:"Oblíbený jed detektivních románů — bez chuti, bez zápachu, příznaky jako chřipka."},
+  {z:82, sym:"Pb", name:"Olovo", lat:"Plumbum", cat:"Ostatní kovy", fun:"Římané sladili víno olovnatými nádobami. Někteří historici to dávají za příčinu úpadku říše."},
+  {z:83, sym:"Bi", name:"Bismut", lat:"Bismutum", cat:"Ostatní kovy", fun:"Krystaly bizmutu vypadají jako sci-fi architektury — duhové kubické schody."},
+  {z:84, sym:"Po", name:"Polonium", lat:"Polonium", cat:"Polokovy", fun:"Marie Curie ho pojmenovala po své vlasti Polsku. Je extrémně radioaktivní."},
+  {z:85, sym:"At", name:"Astat", lat:"Astentium", cat:"Halogeny", fun:"Nejradioaktivnější přirozený prvek. V celé zemské kůře ho je méně než 30 gramů."},
+  {z:86, sym:"Rn", name:"Radon", lat:"Radon", cat:"Vzácné plyny", fun:"Radioaktivní plyn pronikající ze země do sklepů — druhá nejčastější příčina rakoviny plic."},
+  {z:87, sym:"Fr", name:"Francium", lat:"Francium", cat:"Alkalické kovy", fun:"Nejtěžší přirozený alkalický kov. V celé zemské kůře ho existuje méně než 30 gramů."},
+  {z:88, sym:"Ra", name:"Radium", lat:"Radium", cat:"Kovy alk. zemin", fun:"Ve 20. letech se přidávalo do hodinek — dělaly číselník svítící ve tmě. Způsobovalo rakovinu."},
+  {z:89, sym:"Ac", name:"Aktinium", lat:"Actinium", cat:"Aktinoidy", fun:"Svítí modře ve tmě díky radioaktivnímu záření ionizujícímu vzduch kolem sebe."},
+  {z:90, sym:"Th", name:"Thorium", lat:"Thorium", cat:"Aktinoidy", fun:"Pojmenováno po Thorovi — bohu hromu. Mohlo by pohánět jaderné reaktory bezpečněji než uran."},
+  {z:91, sym:"Pa", name:"Protaktinium", lat:"Protactinium", cat:"Aktinoidy", fun:"Jeden z nejnebezpečnějších prvků — radioaktivní a extrémně toxický. Nemá žádné využití."},
+  {z:92, sym:"U", name:"Uran", lat:"Uranium", cat:"Aktinoidy", fun:"Pojmenováno po planetě Uran. Objev radioaktivity uranem změnil celou fyziku."},
+  {z:93, sym:"Np", name:"Neptunium", lat:"Neptunium", cat:"Aktinoidy", fun:"Pojmenováno po Neptunu — stejně jako Neptun je za Uranem, neptunium je za uranem v tabulce."},
+  {z:94, sym:"Pu", name:"Plutonium", lat:"Plutonium", cat:"Aktinoidy", fun:"Pojmenováno po Plutovi. Méně než 6 kg plutonia stačí k sestrojení atomové bomby."},
+  {z:95, sym:"Am", name:"Americium", lat:"Americium", cat:"Aktinoidy", fun:"Je v každém detektoru kouře ve tvém domě. Ionizuje vzduch a detekuje kouř."},
+  {z:96, sym:"Cm", name:"Curium", lat:"Curium", cat:"Aktinoidy", fun:"Pojmenováno po Marii a Pierrovi Curiovým — jedináček mezi prvky pojmenovanými po páru."},
+  {z:97, sym:"Bk", name:"Berkelium", lat:"Berkelium", cat:"Aktinoidy", fun:"Pojmenováno po Berkeley v Kalifornii. Syntetizováno poprvé v roce 1949."},
+  {z:98, sym:"Cf", name:"Californium", lat:"Californium", cat:"Aktinoidy", fun:"Nejdražší prodávaná látka na světě — miligram stojí 27 milionů dolarů."},
+  {z:99, sym:"Es", name:"Einsteinium", lat:"Einsteinium", cat:"Aktinoidy", fun:"Bylo tajně objeveno v troskách první vodíkové bomby. Pojmenováno po Einsteinovi."},
+  {z:100, sym:"Fm", name:"Fermium", lat:"Fermium", cat:"Aktinoidy", fun:"Také objeveno v troskách bomby. Pojmenováno po Enricu Fermim, otci jaderného reaktoru."},
+  {z:101, sym:"Md", name:"Mendelevium", lat:"Mendelevium", cat:"Aktinoidy", fun:"Pojmenováno po Mendělejevovi — tvůrci periodické tabulky, která ho samozřejmě obsahuje."},
+  {z:102, sym:"No", name:"Nobelium", lat:"Nobelium", cat:"Aktinoidy", fun:"Pojmenováno po Alfredu Nobelovi. Má poločas rozpadu pouhé 58 minut."},
+  {z:103, sym:"Lr", name:"Lawrencium", lat:"Lawrencium", cat:"Aktinoidy", fun:"Pojmenováno po Ernstu Lawrencovi, vynálezci cyklotronu — stroje na výrobu těžkých prvků."},
+  {z:104, sym:"Rf", name:"Rutherfordium", lat:"Rutherfordium", cat:"Přechodné kovy", fun:"Pojmenováno po Ernestu Rutherfordovi, který objevil atomové jádro. Trvá jen sekundy."},
+  {z:105, sym:"Db", name:"Dubnium", lat:"Dubnium", cat:"Přechodné kovy", fun:"Pojmenováno po Dubně v Rusku — kde bylo souběžně syntetizováno s americkým týmem."},
+  {z:106, sym:"Sg", name:"Seaborgium", lat:"Seaborgium", cat:"Přechodné kovy", fun:"Glenn Seaborg byl prvním živým člověkem, po němž byl prvek pojmenován za jeho života."},
+  {z:107, sym:"Bh", name:"Bohrium", lat:"Bohrium", cat:"Přechodné kovy", fun:"Pojmenováno po Nielsi Bohrovi — dánském fyzikovi, který popsal model atomu."},
+  {z:108, sym:"Hs", name:"Hassium", lat:"Hassium", cat:"Přechodné kovy", fun:"Pojmenováno po Hassia — latinském názvu německé spolkové země Hesensko."},
+  {z:109, sym:"Mt", name:"Meitnerium", lat:"Meitnerium", cat:"Přechodné kovy", fun:"Pojmenováno po Lise Meitnerové — fyzičce, která vysvětlila jaderné štěpení, ale Nobel nedostala."},
+  {z:110, sym:"Ds", name:"Darmstadtium", lat:"Darmstadtium", cat:"Přechodné kovy", fun:"Pojmenováno po Darmstadtu v Německu, kde bylo syntetizováno. Vydrží jen mikrosekundy."},
+  {z:111, sym:"Rg", name:"Roentgenium", lat:"Roentgenium", cat:"Přechodné kovy", fun:"Pojmenováno po Wilhelmu Röntgenovi — objeviteli rentgenového záření."},
+  {z:112, sym:"Cn", name:"Copernicium", lat:"Copernicium", cat:"Přechodné kovy", fun:"Pojmenováno po Mikuláši Koperníkovi — astronomovi, který ukázal, že Země obíhá Slunce."},
+  {z:113, sym:"Nh", name:"Nihonium", lat:"Nihonium", cat:"Ostatní kovy", fun:"První prvek syntetizovaný v Asii — v Japonsku. 'Nihon' znamená japonsky Japonsko."},
+  {z:114, sym:"Fl", name:"Flerovium", lat:"Flerovium", cat:"Ostatní kovy", fun:"Pojmenováno po Flerovově laboratoři v Dubně. Existuje jen zlomky sekundy."},
+  {z:115, sym:"Mc", name:"Moscovium", lat:"Moscovium", cat:"Ostatní kovy", fun:"Pojmenováno po Moskevské oblasti. Syntetizováno v roce 2003, uznáno až v roce 2016."},
+  {z:116, sym:"Lv", name:"Livermorium", lat:"Livermorium", cat:"Ostatní kovy", fun:"Pojmenováno po Livermore v Kalifornii — centru amerického jaderného výzkumu."},
+  {z:117, sym:"Ts", name:"Tennessine", lat:"Tennessine", cat:"Halogeny", fun:"Pojmenováno po Tennessee — státu, kde sídlí Oak Ridge National Laboratory."},
+  {z:118, sym:"Og", name:"Oganesson", lat:"Oganesson", cat:"Vzácné plyny", fun:"Nejtěžší dosud syntetizovaný prvek. Pojmenováno po fyzikovi Jurim Oganesjanovi."},
+].map(e => ({...e, skolni: SKOLNI.has(e.z)}));
 
 let mode = 'flash';
 let selectedCats = new Set(['Vše']);
@@ -832,22 +858,20 @@ function buildCats() {
   cl.innerHTML = '';
   const allCats = [...new Set(ELEMENTS.map(e => e.cat))];
   const isAll = selectedCats.has('Vše');
+  const isSkolni = selectedCats.has('Školní skupina');
 
-  // "Vše" button spanning full width
+  // "Vše" button
   const allBtn = document.createElement('button');
   allBtn.className = 'cat-btn' + (isAll ? ' active' : '');
   allBtn.textContent = `Vše (${ELEMENTS.length})`;
-  allBtn.onclick = () => {
-    selectedCats = new Set(['Vše']);
-    buildCats();
-    applyFilter();
-  };
+  allBtn.onclick = () => { selectedCats = new Set(['Vše']); buildCats(); applyFilter(); };
   cl.appendChild(allBtn);
 
+  // Regular category buttons
   allCats.forEach(cat => {
     const count = ELEMENTS.filter(e => e.cat === cat).length;
     const btn = document.createElement('button');
-    const isActive = !isAll && selectedCats.has(cat);
+    const isActive = !isAll && !isSkolni && selectedCats.has(cat);
     btn.className = 'cat-btn' + (isActive ? ' active' : '');
     btn.textContent = `${cat}\n(${count})`;
     btn.style.whiteSpace = 'pre-line';
@@ -857,18 +881,33 @@ function buildCats() {
         if (selectedCats.size === 0) selectedCats.add('Vše');
       } else {
         selectedCats.delete('Vše');
+        selectedCats.delete('Školní skupina');
         selectedCats.add(cat);
       }
-      buildCats();
-      applyFilter();
+      buildCats(); applyFilter();
     };
     cl.appendChild(btn);
   });
+
+  // Školní skupina — special, at the end
+  const skolniCount = ELEMENTS.filter(e => e.skolni).length;
+  const skolniBtn = document.createElement('button');
+  skolniBtn.className = 'cat-btn' + (isSkolni ? ' active' : '');
+  skolniBtn.textContent = `⭐ Školní skupina\n(${skolniCount})`;
+  skolniBtn.style.whiteSpace = 'pre-line';
+  skolniBtn.onclick = () => {
+    selectedCats = new Set(['Školní skupina']);
+    buildCats(); applyFilter();
+  };
+  cl.appendChild(skolniBtn);
 }
 
 function applyFilter() {
   const isAll = selectedCats.has('Vše');
-  filtered = isAll ? [...ELEMENTS] : ELEMENTS.filter(e => selectedCats.has(e.cat));
+  const isSkolni = selectedCats.has('Školní skupina');
+  if (isAll) filtered = [...ELEMENTS];
+  else if (isSkolni) filtered = ELEMENTS.filter(e => e.skolni);
+  else filtered = ELEMENTS.filter(e => selectedCats.has(e.cat));
   document.getElementById('stat-total').textContent = filtered.length;
   fcList = [...filtered];
   fcIndex = 0;
@@ -881,6 +920,7 @@ function setMode(m) {
   document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&m==='flash')||(i===1&&m==='quiz')));
   document.getElementById('flashcard-mode').style.display = m === 'flash' ? 'block' : 'none';
   document.getElementById('quiz-mode').style.display = m === 'quiz' ? 'block' : 'none';
+  document.getElementById('stats-bar').style.display = m === 'quiz' ? 'flex' : 'none';
   if (m === 'flash') renderFlash();
   else startQuiz();
 }
@@ -893,6 +933,7 @@ function renderFlash() {
   document.getElementById('fc-symbol').textContent = el.sym;
   document.getElementById('fc-category-badge').textContent = el.cat;
   document.getElementById('fc-name').textContent = el.name;
+  document.getElementById('fc-latin').textContent = el.lat || '';
   document.getElementById('fc-detail').textContent = `Protonové číslo: ${el.z} · ${el.cat}`;
   document.getElementById('fc-funfact').textContent = el.fun || '';
   
@@ -973,7 +1014,7 @@ function renderQuiz() {
   } else {
     qLabel.textContent = 'Jaká je chemická značka?';
     qContent.innerHTML = `<div class="quiz-name-q">${el.name}</div>`;
-    qSub.textContent = `Protonové číslo: ${el.z} · ${el.cat}`;
+    qSub.textContent = `${el.lat ? el.lat + ' · ' : ''}${el.z} · ${el.cat}`;
     correctAnswer = el.sym;
   }
 
