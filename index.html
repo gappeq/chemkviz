@@ -614,6 +614,49 @@
     100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
   }
 
+  /* Update banner */
+  #update-banner {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    padding: 12px 20px;
+    border-radius: 100px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+    animation: slideUp 0.3s ease;
+  }
+
+  #update-banner.visible {
+    display: flex;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to   { transform: translateX(-50%) translateY(0);   opacity: 1; }
+  }
+
+  #update-btn {
+    background: #fff;
+    color: var(--accent);
+    border: none;
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--surface); }
@@ -621,6 +664,11 @@
 </style>
 </head>
 <body>
+
+<div id="update-banner">
+  🆕 Nová verze je dostupná!
+  <button id="update-btn" onclick="doUpdate()">Aktualizovat</button>
+</div>
 
 <div id="app">
   <header>
@@ -1713,12 +1761,29 @@ buildCats();
 setMode('flash');
 renderFlash();
 </script>
+
 <script>
+let newWorker;
+
+function doUpdate() {
+  if (newWorker) newWorker.postMessage({ action: 'skipWaiting' });
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('ChemKvíz SW registered'))
-      .catch(e => console.log('SW error:', e));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('update-banner').classList.add('visible');
+          }
+        });
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
   });
 }
 </script>
