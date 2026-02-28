@@ -973,7 +973,6 @@ function setMode(m) {
   else startQuiz();
 }
 
-// FLASHCARD
 function renderFlash() {
   const el = fcList[fcIndex];
   if (!el) return;
@@ -988,10 +987,6 @@ function renderFlash() {
   const pct = ((fcIndex + 1) / fcList.length * 100).toFixed(0);
   document.getElementById('fc-progress').style.width = pct + '%';
   document.getElementById('fc-progress-text').textContent = `${fcIndex + 1} / ${fcList.length}`;
-
-  // Reset flip
-  isFlipped = false;
-  document.getElementById('flashcard').classList.remove('flipped');
 }
 
 function flipCard() {
@@ -999,20 +994,33 @@ function flipCard() {
   document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
 }
 
+function navigateTo(newIndex) {
+  const card = document.getElementById('flashcard');
+  if (isFlipped) {
+    // Flip back first, update content mid-animation when card is edge-on
+    card.classList.remove('flipped');
+    isFlipped = false;
+    setTimeout(() => {
+      fcIndex = newIndex;
+      renderFlash();
+    }, 250); // halfway through 0.5s animation
+  } else {
+    fcIndex = newIndex;
+    renderFlash();
+  }
+}
+
 function nextCard() {
-  fcIndex = (fcIndex + 1) % fcList.length;
-  renderFlash();
+  navigateTo((fcIndex + 1) % fcList.length);
 }
 
 function prevCard() {
-  fcIndex = (fcIndex - 1 + fcList.length) % fcList.length;
-  renderFlash();
+  navigateTo((fcIndex - 1 + fcList.length) % fcList.length);
 }
 
 function shuffleCards() {
   fcList = fcList.sort(() => Math.random() - 0.5);
-  fcIndex = 0;
-  renderFlash();
+  navigateTo(0);
 }
 
 // QUIZ
@@ -1212,6 +1220,65 @@ const SKINS = [
       .btn-next-quiz { font-family: 'VT323', monospace !important; font-size: 22px !important; font-style: normal !important; color: #000 !important; }
       .mode-tab.active { color: #000 !important; }
       .btn-next { color: #000 !important; }
+      body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
+    `,
+  },
+  {
+    id: 'julie',
+    label: '💜',
+    title: 'Julie',
+    gradient: 'linear-gradient(135deg, #56199b, #1a0030)',
+    vars: {
+      '--bg': '#050008',
+      '--surface': '#0d0018',
+      '--card': '#130020',
+      '--border': '#3d0077',
+      '--accent': '#a855f7',
+      '--accent2': '#c084fc',
+      '--accent3': '#e9d5ff',
+      '--text': '#e9d5ff',
+      '--muted': '#c084fc',
+      '--correct': '#a855f7',
+      '--wrong': '#ff5533',
+    },
+    bodyFont: "'VT323', monospace",
+    h1Font: "'VT323', monospace",
+    h1Style: 'normal',
+    bgGlow: 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(86,25,155,0.08) 0%, transparent 70%)',
+    cardFrontBg: 'linear-gradient(135deg, #0d0020, #110028)',
+    cardBackBg: 'linear-gradient(135deg, #080015, #0d001e)',
+    confetti: ['#a855f7','#c084fc','#e9d5ff','#fff','#56199b'],
+    extraCSS: `
+      h1 { font-size: 48px !important; letter-spacing: 2px; color: #e9d5ff !important; }
+      h1 span { color: #a855f7 !important; }
+      .logo { color: #a855f7 !important; }
+      .element-symbol { font-family: 'VT323', monospace !important; font-size: 90px !important; color: #a855f7 !important; }
+      .element-name { font-family: 'VT323', monospace !important; font-size: 44px !important; font-style: normal !important; color: #e9d5ff !important; }
+      .element-latin { color: #c084fc !important; }
+      .element-detail { color: #c084fc !important; }
+      .element-funfact { color: #e9d5ff !important; }
+      .element-number { color: #c084fc !important; }
+      .quiz-symbol { font-family: 'VT323', monospace !important; font-size: 100px !important; color: #a855f7 !important; }
+      .quiz-name-q { font-family: 'VT323', monospace !important; font-size: 44px !important; font-style: normal !important; color: #e9d5ff !important; }
+      .quiz-sub { color: #c084fc !important; }
+      .question-label { color: #c084fc !important; }
+      .btn-next-quiz { font-family: 'VT323', monospace !important; font-size: 22px !important; font-style: normal !important; color: #fff !important; background: #56199b !important; }
+      .mode-tab { color: #c084fc !important; }
+      .mode-tab.active { color: #fff !important; background: #56199b !important; }
+      .btn-next { color: #fff !important; background: #56199b !important; }
+      .btn-prev { color: #e9d5ff !important; border-color: #3d0077 !important; }
+      .progress-fill { background: #a855f7 !important; }
+      .stat-val { color: #a855f7 !important; }
+      .stat-label { color: #c084fc !important; }
+      .cat-btn { color: #c084fc !important; border-color: #3d0077 !important; }
+      .cat-btn.active { border-color: #a855f7 !important; color: #e9d5ff !important; background: rgba(168,85,247,0.15) !important; }
+      .answer-btn { color: #e9d5ff !important; border-color: #3d0077 !important; }
+      .answer-btn:hover:not(:disabled) { border-color: #a855f7 !important; }
+      .answer-btn.correct { border-color: #a855f7 !important; color: #e9d5ff !important; }
+      .answer-btn.wrong { border-color: #ff5533 !important; color: #ff8866 !important; }
+      .quiz-question::before { background: linear-gradient(90deg, #56199b, #a855f7) !important; }
+      .flip-hint { color: #c084fc !important; }
+      .progress-text { color: #c084fc !important; }
       body::after { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
     `,
   },
